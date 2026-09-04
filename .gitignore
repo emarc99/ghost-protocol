@@ -1,0 +1,26 @@
+# Compiler files
+cache/
+out/
+artifacts/
+
+# Ignores development broadcast logs
+/broadcast
+/broadcast/*/
+
+# Foundry
+contracts/cache/
+contracts/out/
+
+# Node
+node_modules/
+dist/
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
