@@ -246,6 +246,6 @@ For AquaGhost Protocol:
 - Contracts Build: `cd contracts; forge build`
 - Contracts Test: `cd contracts; forge test`
 - CRE Workflow Check: `cd cre-workflow; npx tsc --noEmit`
-- MEV Attack Simulation: `npx ts-node scripts/simulate_jit_attack.ts`
-- Verify: `cd contracts; forge build`
+- MEV Attack Simulation: `npm run simulate`
+- Verify: `cd contracts; forge test`
 
