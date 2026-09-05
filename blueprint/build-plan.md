@@ -19,8 +19,8 @@
 
 - [x] 11. **AI Blueprint Framework Installation** - Scaffold `.blueprint/`, adapters, skills, and gated loop configs
 - [x] 12. **Project & Build Plans Configuration** - Define problem, tech stack, data flows, and roadmap
-- [ ] 13. **AI Assistance Proof Log (`AI_ASSISTANCE.md`)** - Document the anti-vibe-coding workflow, human-as-gatekeeper decisions, and ETHGlobal AI disclosures
-- [ ] 14. **Sponsor GitHub Issues & Feedback Ledgers** - Create actionable upstream issue reports for Chainlink CRE, 1inch Aqua, The Graph, and Uniswap
+- [x] 13. **AI Assistance Proof Log (`AI_ASSISTANCE.md`)** - Document the anti-vibe-coding workflow, human-as-gatekeeper decisions, and ETHGlobal AI disclosures
+- [x] 14. **Sponsor GitHub Issues & Feedback Ledgers** - Create actionable upstream issue reports for Chainlink CRE, 1inch Aqua, The Graph, and Uniswap
 
 ## Phase 3: Visual Demo & Live Integrations (Upcoming)
 
