@@ -84,8 +84,11 @@ when you just want something done.
    maintainability risks. Run `/audit independent current` when a selected fresh
    reviewer session should inspect an approved checkpoint and leave a
    staleness-checked receipt. Fixes still happen through `/implement` or `/fix`.
-8. **Iterate** - If it doesn't work or needs changes, re-prompt or hand-edit and
-   re-test; repeat until it works, before moving on.
+8. **Iterate & Upstream Sponsor Issues** - If it doesn't work, requires changes, or encounters SDK friction/bugs:
+   - Commit fixes atomically: `git commit -m "fix(<scope>): <description>"`.
+   - **Immediately update or append a ready-to-file GitHub Issue** in `docs/sponsor-issues/` (e.g. `CHAINLINK_CRE_ISSUES.md`, `ONEINCH_AQUA_FEEDBACK.md`, `THE_GRAPH_MCP_FEEDBACK.md`, or `FEEDBACK.md`).
+   - Document the resolution and human review in `AI_ASSISTANCE.md`.
+   - Repeat testing until it passes before moving on.
 9. **Checkpoint (optional)** - checkpoint commits are disabled by default. When
    enabled with per-step review, `/implement` offers continue, commit a
    checkpoint, walk me through it, or stop here after an approved step. The

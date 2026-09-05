@@ -25,9 +25,26 @@ The workflow is defined by the local skills and context files below.
 - `blueprint/context/coding-standards.md` - read before changing code
 - `blueprint/context/ai-interaction.md` - read when running the Blueprint workflow
 - `blueprint/context/current-feature.md` - the one feature, fix, or rollback being built right now
+- `docs/sponsor-issues/` - sponsor feedback and ready-to-file GitHub issues
 
 Reuse relevant context already loaded in the session. Claude Code imports only
 this file; its Blueprint skills load the other files on demand.
+
+## Sponsor Feedback & Upstream GitHub Issue Discipline (MANDATORY)
+
+For ETHGlobal Online 2026, sponsors (Chainlink, Uniswap Foundation, 1inch, The Graph) actively reward teams that discover friction and propose high-value upstream improvements.
+
+Every agent working on this repository MUST follow these rules:
+1. **Strict Atomic Commits:** Commit every single change atomically (`feat`, `fix`, `docs`, `test`, `chore`). Never combine multiple features or fixes into one commit.
+2. **When an Issue or Bug is Encountered:**
+   - Commit the bugfix atomically: `git commit -m "fix(<scope>): <description>"`.
+   - **Immediately update or append a structured GitHub issue** in the corresponding ledger under `docs/sponsor-issues/`:
+     - **Chainlink CRE SDK / Enclaves:** `docs/sponsor-issues/CHAINLINK_CRE_ISSUES.md`
+     - **1inch Aqua:** `docs/sponsor-issues/ONEINCH_AQUA_FEEDBACK.md`
+     - **The Graph Subgraph MCP:** `docs/sponsor-issues/THE_GRAPH_MCP_FEEDBACK.md`
+     - **Uniswap v4:** `FEEDBACK.md`
+   - Include: Context, Problem & DX friction, Code Snippet, and Suggested Solution / PR blueprint.
+3. **Maintain AI Assistance Trail:** Keep `AI_ASSISTANCE.md` updated with human-approved architectural decisions and verified proofs.
 
 ## Project configuration
 
