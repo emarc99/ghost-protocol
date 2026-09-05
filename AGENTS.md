@@ -224,19 +224,11 @@ checks do not make the Blueprint unusable.
 
 ## Commands
 
-<!-- blueprint:onboarding-required -->
-For a standard Next.js project. Change or remove if you're using something else.
+For AquaGhost Protocol:
 
-- Dev server: `npm run dev` (http://localhost:3000)
-- Build: `npm run build`
-- Production server: `npm run start`
-- Lint: `npm run lint`
+- Contracts Build: `cd contracts; forge build`
+- Contracts Test: `cd contracts; forge test`
+- CRE Workflow Check: `cd cre-workflow; npx tsc --noEmit`
+- MEV Attack Simulation: `npx ts-node scripts/simulate_jit_attack.ts`
+- Verify: `cd contracts; forge build`
 
-Testing is opt-in. If this project does not already have a unit test runner, run
-`/tests` or `$tests` to add one and update this section with the real test
-commands.
-
-Browser testing is also opt-in. Run `/browser-tests` or `$browser-tests` to add
-or normalize a browser harness and document its exact command as `Browser
-tests`. Check and Continuous Mode can then reuse it without installing tooling
-mid-feature.
