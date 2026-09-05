@@ -1,12 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.26;
+pragma solidity 0.8.26;
 
 import { Test, console2 } from "forge-std/Test.sol";
 import { AquaGhostApp } from "../src/AquaGhostApp.sol";
 import { AquaGhostHook } from "../src/AquaGhostHook.sol";
 import { IAqua } from "aqua/interfaces/IAqua.sol";
 import { IPoolManager } from "v4-core/src/interfaces/IPoolManager.sol";
+import { Hooks } from "v4-core/src/libraries/Hooks.sol";
 import { PoolKey } from "v4-core/src/types/PoolKey.sol";
+import { PoolId, PoolIdLibrary } from "v4-core/src/types/PoolId.sol";
+import { Currency } from "v4-core/src/types/Currency.sol";
+import { ModifyLiquidityParams, SwapParams } from "v4-core/src/types/PoolOperation.sol";
+import { BeforeSwapDelta, BeforeSwapDeltaLibrary } from "v4-core/src/types/BeforeSwapDelta.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
 contract MockAqua is IAqua {
@@ -30,20 +35,39 @@ contract MockAqua is IAqua {
 
 contract AquaGhostTest is Test {
     using MessageHashUtils for bytes32;
+    using PoolIdLibrary for PoolKey;
 
     AquaGhostApp public aquaGhostApp;
+    AquaGhostHook public aquaGhostHook;
     MockAqua public mockAqua;
+    IPoolManager public poolManager;
 
     uint256 internal enclavePrivateKey = 0xA11CE;
     address internal enclaveSigner;
+    PoolKey internal testPoolKey;
 
     function setUp() public {
         enclaveSigner = vm.addr(enclavePrivateKey);
         mockAqua = new MockAqua();
+        poolManager = IPoolManager(address(0x9999));
+
         aquaGhostApp = new AquaGhostApp(mockAqua, enclaveSigner);
+        aquaGhostHook = new AquaGhostHook(poolManager, enclaveSigner);
+
+        testPoolKey = PoolKey({
+            currency0: Currency.wrap(address(0x1111)),
+            currency1: Currency.wrap(address(0x2222)),
+            fee: 3000,
+            tickSpacing: 60,
+            hooks: aquaGhostHook
+        });
     }
 
-    function test_DefensiveShift_ValidSignature() public {
+    // =========================================================================
+    // AquaGhostApp Unit Tests
+    // =========================================================================
+
+    function test_App_DefensiveShift_ValidSignature() public {
         AquaGhostApp.GhostStrategy memory initialStrategy = AquaGhostApp.GhostStrategy({
             maker: address(this),
             token0: address(0x1111),
@@ -53,13 +77,15 @@ contract AquaGhostTest is Test {
             feeBps: 30
         });
 
-        int24 newTickLower = -201400;
-        int24 newTickUpper = -201100;
-        uint24 newFeeBps = 100;
-        uint256 nonce = 1;
+        AquaGhostApp.ShiftParams memory params = AquaGhostApp.ShiftParams({
+            newTickLower: -201400,
+            newTickUpper: -201100,
+            newFeeBps: 100,
+            nonce: 1
+        });
 
         bytes32 rawHash = keccak256(
-            abi.encodePacked("DEFENSIVE_SHIFT", newTickLower, newTickUpper, newFeeBps, nonce)
+            abi.encodePacked("DEFENSIVE_SHIFT", params.newTickLower, params.newTickUpper, params.newFeeBps, params.nonce)
         );
         bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
@@ -73,21 +99,12 @@ contract AquaGhostTest is Test {
         amounts[0] = 10 ether;
         amounts[1] = 20 ether;
 
-        aquaGhostApp.executeDefensiveShift(
-            initialStrategy,
-            newTickLower,
-            newTickUpper,
-            newFeeBps,
-            nonce,
-            signature,
-            tokens,
-            amounts
-        );
+        aquaGhostApp.executeDefensiveShift(initialStrategy, params, signature, tokens, amounts);
 
-        assertTrue(aquaGhostApp.executedNonces(nonce));
+        assertTrue(aquaGhostApp.executedNonces(params.nonce));
     }
 
-    function test_DefensiveShift_RevertOnReplayedNonce() public {
+    function test_App_DefensiveShift_RevertOnReplayedNonce() public {
         AquaGhostApp.GhostStrategy memory initialStrategy = AquaGhostApp.GhostStrategy({
             maker: address(this),
             token0: address(0x1111),
@@ -97,13 +114,15 @@ contract AquaGhostTest is Test {
             feeBps: 30
         });
 
-        int24 newTickLower = -201400;
-        int24 newTickUpper = -201100;
-        uint24 newFeeBps = 100;
-        uint256 nonce = 42;
+        AquaGhostApp.ShiftParams memory params = AquaGhostApp.ShiftParams({
+            newTickLower: -201400,
+            newTickUpper: -201100,
+            newFeeBps: 100,
+            nonce: 42
+        });
 
         bytes32 rawHash = keccak256(
-            abi.encodePacked("DEFENSIVE_SHIFT", newTickLower, newTickUpper, newFeeBps, nonce)
+            abi.encodePacked("DEFENSIVE_SHIFT", params.newTickLower, params.newTickUpper, params.newFeeBps, params.nonce)
         );
         bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
@@ -112,27 +131,330 @@ contract AquaGhostTest is Test {
         address[] memory tokens = new address[](0);
         uint256[] memory amounts = new uint256[](0);
 
-        aquaGhostApp.executeDefensiveShift(
-            initialStrategy,
-            newTickLower,
-            newTickUpper,
-            newFeeBps,
-            nonce,
-            signature,
-            tokens,
-            amounts
+        aquaGhostApp.executeDefensiveShift(initialStrategy, params, signature, tokens, amounts);
+
+        vm.expectRevert(AquaGhostApp.NonceAlreadyUsed.selector);
+        aquaGhostApp.executeDefensiveShift(initialStrategy, params, signature, tokens, amounts);
+    }
+
+    function test_App_DefensiveShift_RevertOnInvalidSignature() public {
+        AquaGhostApp.GhostStrategy memory initialStrategy = AquaGhostApp.GhostStrategy({
+            maker: address(this),
+            token0: address(0x1111),
+            token1: address(0x2222),
+            tickLower: -201200,
+            tickUpper: -201000,
+            feeBps: 30
+        });
+
+        AquaGhostApp.ShiftParams memory params = AquaGhostApp.ShiftParams({
+            newTickLower: -201400,
+            newTickUpper: -201100,
+            newFeeBps: 100,
+            nonce: 99
+        });
+
+        // Sign with an unauthorized attacker key
+        uint256 attackerKey = 0xBAD;
+        bytes32 rawHash = keccak256(
+            abi.encodePacked("DEFENSIVE_SHIFT", params.newTickLower, params.newTickUpper, params.newFeeBps, params.nonce)
+        );
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(attackerKey, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        address[] memory tokens = new address[](0);
+        uint256[] memory amounts = new uint256[](0);
+
+        vm.expectRevert(AquaGhostApp.InvalidEnclaveSignature.selector);
+        aquaGhostApp.executeDefensiveShift(initialStrategy, params, signature, tokens, amounts);
+    }
+
+    function test_App_DefensiveShift_RevertOnInvalidTickRange() public {
+        AquaGhostApp.GhostStrategy memory initialStrategy = AquaGhostApp.GhostStrategy({
+            maker: address(this),
+            token0: address(0x1111),
+            token1: address(0x2222),
+            tickLower: -201200,
+            tickUpper: -201000,
+            feeBps: 30
+        });
+
+        // tickLower >= tickUpper
+        AquaGhostApp.ShiftParams memory params = AquaGhostApp.ShiftParams({
+            newTickLower: -201000,
+            newTickUpper: -201200,
+            newFeeBps: 100,
+            nonce: 101
+        });
+
+        address[] memory tokens = new address[](0);
+        uint256[] memory amounts = new uint256[](0);
+
+        vm.expectRevert(abi.encodeWithSelector(AquaGhostApp.InvalidTickRange.selector, params.newTickLower, params.newTickUpper));
+        aquaGhostApp.executeDefensiveShift(initialStrategy, params, "", tokens, amounts);
+    }
+
+    function test_App_Constructor_RevertOnZeroAddress() public {
+        vm.expectRevert(AquaGhostApp.ZeroAddress.selector);
+        new AquaGhostApp(IAqua(address(0)), enclaveSigner);
+
+        vm.expectRevert(AquaGhostApp.ZeroAddress.selector);
+        new AquaGhostApp(mockAqua, address(0));
+    }
+
+    // =========================================================================
+    // AquaGhostHook Unit Tests
+    // =========================================================================
+
+    function test_Hook_Permissions() public view {
+        Hooks.Permissions memory perms = aquaGhostHook.getHookPermissions();
+        assertTrue(perms.beforeAddLiquidity);
+        assertTrue(perms.beforeSwap);
+        assertFalse(perms.afterAddLiquidity);
+        assertFalse(perms.afterSwap);
+        assertFalse(perms.beforeInitialize);
+        assertFalse(perms.afterInitialize);
+    }
+
+    function test_Hook_SetDefenseMode_ValidSignature() public {
+        bool active = true;
+        uint24 newFeeBps = 150; // 1.5%
+        uint256 nonce = 500;
+
+        bytes32 rawHash = keccak256(abi.encodePacked("TOGGLE_DEFENSE", active, newFeeBps, nonce));
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        aquaGhostHook.setDefenseMode(active, newFeeBps, nonce, signature);
+
+        assertTrue(aquaGhostHook.defenseModeActive());
+        assertEq(aquaGhostHook.dynamicFeeBps(), newFeeBps);
+        assertTrue(aquaGhostHook.executedNonces(nonce));
+    }
+
+    function test_Hook_SetDefenseMode_RevertOnReplayedNonce() public {
+        bool active = true;
+        uint24 newFeeBps = 100;
+        uint256 nonce = 501;
+
+        bytes32 rawHash = keccak256(abi.encodePacked("TOGGLE_DEFENSE", active, newFeeBps, nonce));
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        aquaGhostHook.setDefenseMode(active, newFeeBps, nonce, signature);
+
+        vm.expectRevert(AquaGhostHook.NonceAlreadyUsed.selector);
+        aquaGhostHook.setDefenseMode(active, newFeeBps, nonce, signature);
+    }
+
+    function test_Hook_SetDefenseMode_RevertOnInvalidSignature() public {
+        bool active = true;
+        uint24 newFeeBps = 100;
+        uint256 nonce = 502;
+
+        uint256 attackerKey = 0xBEEF;
+        bytes32 rawHash = keccak256(abi.encodePacked("TOGGLE_DEFENSE", active, newFeeBps, nonce));
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(attackerKey, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        vm.expectRevert(AquaGhostHook.InvalidEnclaveSignature.selector);
+        aquaGhostHook.setDefenseMode(active, newFeeBps, nonce, signature);
+    }
+
+    function test_Hook_BeforeAddLiquidity_PassWhenDefenseInactive() public {
+        ModifyLiquidityParams memory params = ModifyLiquidityParams({
+            tickLower: -100,
+            tickUpper: 100,
+            liquidityDelta: 1000,
+            salt: bytes32(0)
+        });
+
+        bytes4 selector = aquaGhostHook.beforeAddLiquidity(address(this), testPoolKey, params, "");
+        assertEq(selector, AquaGhostHook.beforeAddLiquidity.selector);
+    }
+
+    function test_Hook_BeforeAddLiquidity_RevertWhenDefenseActive() public {
+        // 1. Arm defense mode via enclave signature
+        uint256 nonce = 777;
+        bytes32 rawHash = keccak256(abi.encodePacked("TOGGLE_DEFENSE", true, uint24(100), nonce));
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
+        aquaGhostHook.setDefenseMode(true, 100, nonce, abi.encodePacked(r, s, v));
+
+        // 2. Sniper bot attempts predatory liquidity injection
+        address sniperBot = address(0xBAD0B07);
+        ModifyLiquidityParams memory params = ModifyLiquidityParams({
+            tickLower: -201210,
+            tickUpper: -201190,
+            liquidityDelta: 15_000_000,
+            salt: bytes32(0)
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(AquaGhostHook.SniperAttackBlocked.selector, sniperBot, testPoolKey.toId())
+        );
+        aquaGhostHook.beforeAddLiquidity(sniperBot, testPoolKey, params, "");
+    }
+
+    function test_Hook_BeforeSwap_DynamicFeeApplied() public {
+        // Activate dynamic fee
+        uint24 targetFee = 250; // 2.5%
+        uint256 nonce = 888;
+        bytes32 rawHash = keccak256(abi.encodePacked("TOGGLE_DEFENSE", true, targetFee, nonce));
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
+        aquaGhostHook.setDefenseMode(true, targetFee, nonce, abi.encodePacked(r, s, v));
+
+        SwapParams memory swapParams = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 1000,
+            sqrtPriceLimitX96: 0
+        });
+
+        (bytes4 selector, BeforeSwapDelta delta, uint24 fee) = aquaGhostHook.beforeSwap(
+            address(this),
+            testPoolKey,
+            swapParams,
+            ""
         );
 
-        vm.expectRevert("Nonce already used");
-        aquaGhostApp.executeDefensiveShift(
-            initialStrategy,
-            newTickLower,
-            newTickUpper,
-            newFeeBps,
-            nonce,
-            signature,
-            tokens,
-            amounts
+        assertEq(selector, AquaGhostHook.beforeSwap.selector);
+        assertEq(fee, targetFee);
+        assertEq(BeforeSwapDelta.unwrap(delta), BeforeSwapDelta.unwrap(BeforeSwapDeltaLibrary.ZERO_DELTA));
+    }
+
+    // =========================================================================
+    // FUZZ TESTS
+    // =========================================================================
+
+    function testFuzz_App_DefensiveShift(
+        int24 tickLower,
+        int24 tickUpper,
+        uint24 feeBps,
+        uint256 nonce
+    ) public {
+        vm.assume(tickLower < tickUpper);
+        vm.assume(feeBps <= 10000);
+        vm.assume(nonce > 0);
+
+        AquaGhostApp.GhostStrategy memory current = AquaGhostApp.GhostStrategy({
+            maker: address(this),
+            token0: address(0x1111),
+            token1: address(0x2222),
+            tickLower: -100,
+            tickUpper: 100,
+            feeBps: 30
+        });
+
+        AquaGhostApp.ShiftParams memory params = AquaGhostApp.ShiftParams({
+            newTickLower: tickLower,
+            newTickUpper: tickUpper,
+            newFeeBps: feeBps,
+            nonce: nonce
+        });
+
+        bytes32 rawHash = keccak256(
+            abi.encodePacked("DEFENSIVE_SHIFT", params.newTickLower, params.newTickUpper, params.newFeeBps, params.nonce)
         );
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        address[] memory tokens = new address[](0);
+        uint256[] memory amounts = new uint256[](0);
+
+        aquaGhostApp.executeDefensiveShift(current, params, signature, tokens, amounts);
+        assertTrue(aquaGhostApp.executedNonces(nonce));
+    }
+
+    function testFuzz_App_RejectUnauthorizedSigner(
+        uint256 attackerKey,
+        uint256 nonce
+    ) public {
+        uint256 secp256k1Order = 115792089237316195423570985008687907852837564279074904382605163141518161494336;
+        attackerKey = bound(attackerKey, 1, secp256k1Order);
+        vm.assume(attackerKey != enclavePrivateKey);
+
+        AquaGhostApp.GhostStrategy memory current = AquaGhostApp.GhostStrategy({
+            maker: address(this),
+            token0: address(0x1111),
+            token1: address(0x2222),
+            tickLower: -100,
+            tickUpper: 100,
+            feeBps: 30
+        });
+
+        AquaGhostApp.ShiftParams memory params = AquaGhostApp.ShiftParams({
+            newTickLower: -500,
+            newTickUpper: 500,
+            newFeeBps: 50,
+            nonce: nonce
+        });
+
+        bytes32 rawHash = keccak256(
+            abi.encodePacked("DEFENSIVE_SHIFT", params.newTickLower, params.newTickUpper, params.newFeeBps, params.nonce)
+        );
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(attackerKey, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        address[] memory tokens = new address[](0);
+        uint256[] memory amounts = new uint256[](0);
+
+        vm.expectRevert(AquaGhostApp.InvalidEnclaveSignature.selector);
+        aquaGhostApp.executeDefensiveShift(current, params, signature, tokens, amounts);
+    }
+
+    function testFuzz_Hook_SniperBlocking(address attacker, uint256 nonce) public {
+        vm.assume(attacker != address(0));
+
+        bytes32 rawHash = keccak256(abi.encodePacked("TOGGLE_DEFENSE", true, uint24(100), nonce));
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
+        aquaGhostHook.setDefenseMode(true, 100, nonce, abi.encodePacked(r, s, v));
+
+        ModifyLiquidityParams memory params = ModifyLiquidityParams({
+            tickLower: -10,
+            tickUpper: 10,
+            liquidityDelta: 1000,
+            salt: bytes32(0)
+        });
+
+        vm.expectRevert(
+            abi.encodeWithSelector(AquaGhostHook.SniperAttackBlocked.selector, attacker, testPoolKey.toId())
+        );
+        aquaGhostHook.beforeAddLiquidity(attacker, testPoolKey, params, "");
+    }
+
+    function testFuzz_Hook_DynamicFee(uint24 feeBps, uint256 nonce) public {
+        feeBps = uint24(bound(feeBps, 0, 10000));
+        vm.assume(nonce > 0);
+
+        bytes32 rawHash = keccak256(abi.encodePacked("TOGGLE_DEFENSE", true, feeBps, nonce));
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
+        aquaGhostHook.setDefenseMode(true, feeBps, nonce, abi.encodePacked(r, s, v));
+
+        SwapParams memory swapParams = SwapParams({
+            zeroForOne: true,
+            amountSpecified: 5000,
+            sqrtPriceLimitX96: 0
+        });
+
+        (bytes4 selector, BeforeSwapDelta delta, uint24 dynamicFee) = aquaGhostHook.beforeSwap(
+            address(this),
+            testPoolKey,
+            swapParams,
+            ""
+        );
+
+        assertEq(selector, AquaGhostHook.beforeSwap.selector);
+        assertEq(BeforeSwapDelta.unwrap(delta), 0);
+        assertEq(dynamicFee, feeBps);
     }
 }
+

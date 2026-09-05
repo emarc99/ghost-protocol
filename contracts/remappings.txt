@@ -1,4 +1,4 @@
-@openzeppelin/=lib/openzeppelin-contracts/
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 aqua/=lib/aqua/
 v4-core/=lib/v4-core/
 v4-periphery/=lib/v4-periphery/
