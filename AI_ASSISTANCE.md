@@ -77,18 +77,39 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `e6ae1c2` | `docs` | Add `FEEDBACK.md` for Uniswap Foundation bounty |
 | `19df67c` | `chore(blueprint)` | Install AI Blueprint workflow framework |
 | `ef32567` | `docs(blueprint)` | Configure project-plan and build-plan for AquaGhost |
+| `a19bef5` | `docs` | Create AI assistance proof log (AI_ASSISTANCE.md) |
+| `f48ed53` | `docs(sponsors)` | Scaffold sponsor feedback and GitHub issue ledgers |
+| `c4ca880` | `docs(blueprint)` | Harmonize project-overview, coding-standards, and AGENTS commands |
+| `5b6dc5f` | `docs(blueprint)` | Enforce mandatory sponsor feedback & GitHub issue discipline |
+| `988ee5a` | `feat(contracts)` | Complete AquaGhostHook, AquaGhostApp, and BaseHook with full unit and fuzz test suite |
+| `c11078b` | `fix(cre)` | Align workflow with @chainlink/cre-sdk v1.19.1 types and capabilities |
+| `11b7f64` | `chore` | Configure root package.json and simulation script command |
 
 ---
 
-## 4. Human vs. AI Responsibility Matrix
+## 4. Key Case Study: Human-as-Architect Intervention
+
+A quintessential demonstration of the AI Blueprint philosophy occurred during development when the agent considered moving toward UI prototyping:
+* **Human Architectural Override:** The human architect immediately halted premature frontend scaffolding: *"how can you think of UI if contracts side isnt ready? do deep research, make no mistake, and ensure problem our project is solving is real. Then complete the contract with deep comprehensive testing validating all key functions in contract, add fuzz tests too."*
+* **Systemic Response:** Rather than continuing to "vibe code" visual components, the agent pivoted 100% to core cryptography, protocol mechanics, EVM stack optimization, and Foundry fuzzing:
+  1. Implemented complete Uniswap v4 `BaseHook` callbacks and permissions.
+  2. Upgraded `AquaGhostHook` and `AquaGhostApp` with ECDSA signature verification, replay protection (`executedNonces`), and structured `ShiftParams`.
+  3. Formulated 16 comprehensive unit and property-based fuzz tests in [`contracts/test/AquaGhost.t.sol`](file:///contracts/test/AquaGhost.t.sol) (256 runs each for dynamic fees, unauthorized signer rejections, defensive repositioning, and sniper blocking).
+  4. Resolved TypeScript compilation friction with `@chainlink/cre-sdk@1.19.1` and added Issue 4 to upstream sponsor feedback ledgers.
+
+---
+
+## 5. Human vs. AI Responsibility Matrix
 
 | Responsibility | Human Developer | AI Assistant |
 | :--- | :---: | :---: |
 | High-Level Product Architecture | **Lead** | Advised / Refined |
+| Architectural Intervention & Prioritization | **Lead (Strict Gatekeeper)** | Subordinate to Human Directives |
 | Sponsor Prize Track Alignment | **Lead** | Validated against SDKs |
 | Code Implementation & Scaffolding | Gatekeeper / Reviewer | **Drafted & Scaffolded** |
 | Interface Compatibility Checks | Reviewer | **Automated** |
 | Deterministic Guardrails Design | **Co-Designer** | **Implemented** |
+| Property-Based Fuzzing & Testing | Requirement Lead | **Implemented (16/16 Passed)** |
 | Git Commit Staging & Review | **Final Authority** | Proposed & Executed |
 | Upstream Issue Formulation | Reviewer | **Synthesized & Formatted** |
 

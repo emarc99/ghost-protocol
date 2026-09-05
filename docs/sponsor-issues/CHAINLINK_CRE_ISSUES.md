@@ -73,3 +73,26 @@ Add a canonical guide in Chainlink CRE documentation showing:
 1. Signing a packed payload with `ethers.solidityPackedKeccak256` inside `handlerInTee`.
 2. Emitting the signature `(bytes signature)` through the DON to an on-chain contract.
 3. Verifying the signature on-chain using OpenZeppelin's `ECDSA.recover` against the enclave's public key registered in a contract whitelist.
+
+---
+
+## Issue 4: [DX/TypeScript] Extensionless relative exports in `dist/index.d.ts` break `NodeNext` module resolution
+
+### Context
+When integrating `@chainlink/cre-sdk` (`v1.19.1`) into a modern TypeScript project configured with `"module": "NodeNext"` and `"moduleResolution": "NodeNext"` in `tsconfig.json`.
+
+### Problem & DX Friction
+1. In `dist/index.d.ts`, the SDK re-exports `export * from './sdk';` without the `.js` file extension.
+2. Under standard TypeScript `NodeNext` ESM rules, extensionless relative imports fail resolution:
+   ```
+   error TS2305: Module '"@chainlink/cre-sdk"' has no exported member 'cre'.
+   ```
+3. Furthermore, `package.json` specifies `"main": "dist/index.js"` but does not provide a CommonJS export fallback under the `"exports"` map, resulting in `[ERR_PACKAGE_PATH_NOT_EXPORTED]` when imported in CommonJS or non-ESM Node runtimes.
+
+### Suggested Solution
+1. In `dist/index.d.ts`, use explicit file extensions for subpath re-exports:
+   ```typescript
+   export * from './sdk/index.js';
+   ```
+2. In `package.json`, export both ESM and CJS definitions or document the requirement for `"moduleResolution": "bundler"` in project `tsconfig.json`.
+
