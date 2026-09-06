@@ -70,25 +70,25 @@
         <div class="metric-label">Hardware Enclave Isolation</div>
         <div class="metric-value" style="color: var(--color-purple);">AWS Nitro TEE</div>
         <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; font-family: var(--font-mono);">
-          PCR0: e8c4...91f2 (Attested)
+          Region: us-west-2 &bull; Zone A
         </div>
       </div>
 
       <div class="glass-panel metric-box">
-        <div class="metric-label">Execution Environment</div>
-        <div class="metric-value" style="font-size: 1.5rem; color: var(--color-cyan);">@chainlink/cre-sdk</div>
-        <div style="font-size: 0.8rem; color: var(--color-emerald); margin-top: 4px;">
-          handlerInTee() &bull; Vault DON Secrets
+        <div class="metric-label">CRE Workflow Deployment</div>
+        <div class="metric-value" style="font-size: 1.15rem; color: var(--color-cyan);">aquaghost-sentinel-staging</div>
+        <div style="font-size: 0.8rem; color: var(--color-emerald); margin-top: 4px; font-family: var(--font-mono);">
+          ID: 00de215285d5...07b07 (Private Registry)
         </div>
       </div>
 
       <div class="glass-panel metric-box">
         <div class="metric-label">Enclave Signer Public Key</div>
         <div class="metric-value" style="font-size: 1.15rem; word-break: break-all;" id="enclave-key-display">
-          0xb1E7...6792
+          0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7
         </div>
         <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">
-          ECDSA Secp256k1 Attestation Key
+          Vault DON Protected &bull; Verified on Anvil Hook
         </div>
       </div>
     </div>
