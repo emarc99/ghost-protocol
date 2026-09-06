@@ -13,6 +13,17 @@ import { Currency } from "v4-core/src/types/Currency.sol";
 import { ModifyLiquidityParams, SwapParams } from "v4-core/src/types/PoolOperation.sol";
 import { BeforeSwapDelta, BeforeSwapDeltaLibrary } from "v4-core/src/types/BeforeSwapDelta.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+
+contract MockERC20 is ERC20 {
+    constructor(string memory name, string memory symbol) ERC20(name, symbol) {
+        _mint(msg.sender, 1_000_000 ether);
+    }
+
+    function mint(address to, uint256 amount) external {
+        _mint(to, amount);
+    }
+}
 
 contract MockAqua is IAqua {
     event DockCalled(address app, bytes32 strategyHash, address[] tokens);
@@ -41,6 +52,8 @@ contract AquaGhostTest is Test {
     AquaGhostHook public aquaGhostHook;
     MockAqua public mockAqua;
     IPoolManager public poolManager;
+    MockERC20 public tokenA;
+    MockERC20 public tokenB;
 
     uint256 internal enclavePrivateKey = 0xA11CE;
     address internal enclaveSigner;
@@ -50,6 +63,8 @@ contract AquaGhostTest is Test {
         enclaveSigner = vm.addr(enclavePrivateKey);
         mockAqua = new MockAqua();
         poolManager = IPoolManager(address(0x9999));
+        tokenA = new MockERC20("Token A", "TKNA");
+        tokenB = new MockERC20("Token B", "TKNB");
 
         aquaGhostApp = new AquaGhostApp(mockAqua, enclaveSigner);
         aquaGhostHook = new AquaGhostHook(poolManager, enclaveSigner);
@@ -455,6 +470,161 @@ contract AquaGhostTest is Test {
         assertEq(selector, AquaGhostHook.beforeSwap.selector);
         assertEq(BeforeSwapDelta.unwrap(delta), 0);
         assertEq(dynamicFee, feeBps);
+    }
+
+    // =========================================================================
+    // Canonical IAquaApp Swap Tests
+    // =========================================================================
+
+    function test_App_QuoteExactInput() public view {
+        AquaGhostApp.GhostStrategy memory strategy = AquaGhostApp.GhostStrategy({
+            maker: address(0xAAAA),
+            token0: address(tokenA),
+            token1: address(tokenB),
+            tickLower: -1000,
+            tickUpper: 1000,
+            feeBps: 30 // 0.3%
+        });
+        bytes memory data = abi.encode(strategy);
+
+        uint256 amountIn = 10_000;
+        uint256 expectedOut = 10_000 - (10_000 * 30 / 10000); // 9970
+        uint256 quoted = aquaGhostApp.quoteExactInput(address(tokenA), address(tokenB), amountIn, data);
+        assertEq(quoted, expectedOut);
+    }
+
+    function test_App_QuoteExactOutput() public view {
+        AquaGhostApp.GhostStrategy memory strategy = AquaGhostApp.GhostStrategy({
+            maker: address(0xAAAA),
+            token0: address(tokenA),
+            token1: address(tokenB),
+            tickLower: -1000,
+            tickUpper: 1000,
+            feeBps: 30 // 0.3%
+        });
+        bytes memory data = abi.encode(strategy);
+
+        uint256 amountOut = 9970;
+        uint256 requiredIn = aquaGhostApp.quoteExactOutput(address(tokenA), address(tokenB), amountOut, data);
+        assertEq(requiredIn, 10_000);
+    }
+
+    function test_App_SwapExactInput_Success() public {
+        address maker = address(0xAAAA);
+        address trader = address(0xBBBB);
+
+        tokenB.mint(maker, 50_000);
+        tokenA.mint(trader, 50_000);
+
+        AquaGhostApp.GhostStrategy memory strategy = AquaGhostApp.GhostStrategy({
+            maker: maker,
+            token0: address(tokenA),
+            token1: address(tokenB),
+            tickLower: -1000,
+            tickUpper: 1000,
+            feeBps: 30
+        });
+        bytes memory data = abi.encode(strategy);
+
+        // Approvals
+        vm.prank(maker);
+        tokenB.approve(address(aquaGhostApp), type(uint256).max);
+
+        vm.prank(trader);
+        tokenA.approve(address(aquaGhostApp), type(uint256).max);
+
+        // Execute swap from trader
+        vm.prank(trader);
+        uint256 amountOut = aquaGhostApp.swapExactInput(
+            address(tokenA),
+            address(tokenB),
+            10_000,
+            9900,
+            trader,
+            data
+        );
+
+        assertEq(amountOut, 9970);
+        assertEq(tokenA.balanceOf(maker), 10_000);
+        assertEq(tokenB.balanceOf(trader), 9970);
+    }
+
+    function test_App_SwapExactOutput_Success() public {
+        address maker = address(0xAAAA);
+        address trader = address(0xBBBB);
+
+        tokenB.mint(maker, 50_000);
+        tokenA.mint(trader, 50_000);
+
+        AquaGhostApp.GhostStrategy memory strategy = AquaGhostApp.GhostStrategy({
+            maker: maker,
+            token0: address(tokenA),
+            token1: address(tokenB),
+            tickLower: -1000,
+            tickUpper: 1000,
+            feeBps: 30
+        });
+        bytes memory data = abi.encode(strategy);
+
+        // Approvals
+        vm.prank(maker);
+        tokenB.approve(address(aquaGhostApp), type(uint256).max);
+
+        vm.prank(trader);
+        tokenA.approve(address(aquaGhostApp), type(uint256).max);
+
+        // Execute swap for exact 9970 output
+        vm.prank(trader);
+        uint256 amountIn = aquaGhostApp.swapExactOutput(
+            address(tokenA),
+            address(tokenB),
+            9970,
+            10_050,
+            trader,
+            data
+        );
+
+        assertEq(amountIn, 10_000);
+        assertEq(tokenA.balanceOf(maker), 10_000);
+        assertEq(tokenB.balanceOf(trader), 9970);
+    }
+
+    function test_App_SwapExactInput_RevertOnSlippage() public {
+        address maker = address(0xAAAA);
+        address trader = address(0xBBBB);
+
+        AquaGhostApp.GhostStrategy memory strategy = AquaGhostApp.GhostStrategy({
+            maker: maker,
+            token0: address(tokenA),
+            token1: address(tokenB),
+            tickLower: -1000,
+            tickUpper: 1000,
+            feeBps: 100 // 1%
+        });
+        bytes memory data = abi.encode(strategy);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(AquaGhostApp.SlippageExceeded.selector, 10_000, 9900)
+        );
+        aquaGhostApp.swapExactInput(address(tokenA), address(tokenB), 10_000, 10_000, trader, data);
+    }
+
+    function test_App_QuoteExactInput_RevertOnInvalidTokens() public {
+        AquaGhostApp.GhostStrategy memory strategy = AquaGhostApp.GhostStrategy({
+            maker: address(0xAAAA),
+            token0: address(tokenA),
+            token1: address(tokenB),
+            tickLower: -1000,
+            tickUpper: 1000,
+            feeBps: 30
+        });
+        bytes memory data = abi.encode(strategy);
+
+        address fakeToken = address(0xDEAD);
+        vm.expectRevert(
+            abi.encodeWithSelector(AquaGhostApp.InvalidTokens.selector, fakeToken, address(tokenB))
+        );
+        aquaGhostApp.quoteExactInput(fakeToken, address(tokenB), 1000, data);
     }
 }
 
