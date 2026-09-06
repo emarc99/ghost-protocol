@@ -10,6 +10,8 @@ artifacts/
 # Foundry
 contracts/cache/
 contracts/out/
+contracts/broadcast/
+broadcast/
 
 # Node
 node_modules/
