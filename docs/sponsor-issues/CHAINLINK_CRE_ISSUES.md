@@ -96,3 +96,37 @@ When integrating `@chainlink/cre-sdk` (`v1.19.1`) into a modern TypeScript proje
    ```
 2. In `package.json`, export both ESM and CJS definitions or document the requirement for `"moduleResolution": "bundler"` in project `tsconfig.json`.
 
+---
+
+## Issue 5: [DX / CLI] `secretsNames` Schema Schema Guidance & Strict Linting in `secrets.yaml`
+
+### Context
+In the official Chainlink CRE Confidential Bootcamp (Case Study 2: *Automated Liquidation Protection* and *Hello Confidential Workflows*), workflows define `secrets.yaml` to map in-enclave `runtime.getSecret({ id })` IDs to local `.env` variables for simulation and Vault DON secrets for deployment.
+
+### Problem & DX Friction
+1. Developers encountering CRE documentation frequently attempt to use YAML list formats (`secrets: - id: FOO env: BAR`) rather than the required `secretsNames:` dictionary with string array values:
+   ```yaml
+   secretsNames:
+     SECRET_ID:
+       - ENV_VARIABLE_NAME
+   ```
+2. When formatted incorrectly, `cre workflow simulate` fails with cryptic missing secret warnings or silently injects undefined without identifying the YAML syntax discrepancy.
+
+### Suggested Improvement
+1. Provide a built-in `cre secrets lint [path]` or schema check that warns if `secrets.yaml` does not adhere to the exact `secretsNames` schema before executing simulation or deployment.
+2. Output a helpful actionable remediation snippet if `secrets:` or flat key-value pairs are detected.
+
+---
+
+## Issue 6: [Feature Request] Offline Mode & Local Secret Injection Flag for CI/CD
+
+### Context
+During hackathons and automated CI workflows, developers need to simulate confidential workflows locally (`cre workflow simulate`) without requiring an active interactive browser session (`--secrets-auth=browser`) or prior manual organization provisioning on `cre.chain.link`.
+
+### Problem
+When automating tests in GitHub Actions or headless Docker containers, the requirement for browser auth or interactive login creates friction for automated regression suites.
+
+### Suggested Improvement
+Add an explicit `--secrets-auth=env` or `--offline` flag to `cre workflow simulate` that strictly parses local `.env` and `secrets.yaml` without attempting any network handshake or token renewal with the CRE registry, enabling seamless CI/CD test automation.
+
+

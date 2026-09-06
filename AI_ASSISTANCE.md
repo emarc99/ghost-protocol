@@ -95,19 +95,29 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `1a958bc` | `feat(deploy)` | Add Anvil deployment script and verification runner with seeded tokens |
 | `4661ed2` | `feat(frontend)` | Integrate Web3WalletManager and ethers.js for live Anvil on-chain interaction |
 | `da640e3` | `chore` | Add test:live script to package.json for on-chain Anvil integration test |
-| `0676b25` | `test(anvil)` | Add end-to-end live on-chain integration test against running Anvil node |
+| `1e241b0` | `chore` | Ignore scratch directory and build temporary files |
+| `b5e48f3` | `feat(skill)` | Integrate official SmartContractKit chainlink-cre-skill for agents |
+| `2aec4ed` | `feat(cre)` | Align workflow with official CRE Confidential spec |
+| `pending` | `docs(cre)` | Append Issue 5 and Issue 6 to CHAINLINK_CRE_ISSUES.md based on Bootcamp learnings |
 
 ---
 
 ## 4. Key Case Study: Human-as-Architect Intervention
 
-Two quintessential demonstrations of the AI Blueprint philosophy occurred during development:
+Three quintessential demonstrations of the AI Blueprint philosophy occurred during development:
 1. **Halting Premature Visual Scaffolding:** The human architect halted early UI vibe-coding to demand 100% contract completeness, formal interface adherence, and property-based fuzzing. The agent pivoted to Foundry fuzz testing (22/22 tests passing across 256 runs).
 2. **Rejecting False Client-Side Simulations:** When the UI demonstrated mock reverts, the human architect challenged the agent: *"on-chain? dont you need my wallet to run on-chain txns, or everything are false simulations"*. Rather than maintaining illusions, the agent acknowledged the distinction immediately and executed a complete local testnet deployment:
    - Spun up a live Foundry `anvil` node on port `8545` (Chain ID `31337`).
    - Deployed `AquaGhostApp`, `AquaGhostHook`, `MockAqua`, `MockPoolCaller`, and test ERC20s (`WETH` and `USDC`) with real contract addresses.
    - Seeded test accounts with 500 WETH and 1,000,000 USDC.
    - Integrated `ethers.js` and `Web3WalletManager` into the frontend dashboard for live `window.ethereum` MetaMask signing and real on-chain transaction broadcast.
+3. **Aligning with Official Chainlink CRE Confidential Bootcamp:** The human architect instructed: *"use [Environment Setup - CRE Confidential Bootcamp: Build Confidential Workflows](https://smartcontractkit.github.io/CRE-Confidential-bootcamp/) as source for cre"* and shared the live workshop recordings (`https://www.youtube.com/watch?v=ArHoB1JDSlE` and `https://www.youtube.com/watch?v=ntwF13Z4_L8`). The agent deeply analyzed the bootcamp textbook and video transcripts, refactoring AquaGhost's workflow to incorporate all 5 official confidential computing patterns:
+   - **`handlerInTee` Execution:** Enforcing AWS Nitro Enclave execution (`[{ tee: "nitro", regions: ["us-west-2"] }]`) using `@chainlink/cre-sdk`.
+   - **Vault DON Secret Injection:** Using in-enclave `runtime.getSecret({ id })` and `runtime.getSecrets([...])` mapped via `secrets.yaml` with the canonical `secretsNames` schema.
+   - **Confidential HTTP:** Routing external API queries (The Graph Subgraph telemetry) via `HTTPClient` so URL endpoints, headers, and mempool signatures remain confidential from node operators.
+   - **Policy-as-Secrets:** Storing JIT anomaly detection thresholds and slippage parameters in the Vault DON so predatory MEV snipers cannot inspect or front-run the defense boundaries.
+   - **Consensus Hand-off via `runtime.usingTheDons()`:** Crossing the confidentiality boundary back to the Decentralized Oracle Network for consensus report generation (`donRuntime.report({ encoderName: "evm", signingAlgo: "ecdsa", hashingAlgo: "keccak256" })`), delivering verified cryptographic attestations to Uniswap v4 and 1inch Aqua contracts.
+   - **Standard Project Configuration:** Configuring root `project.yaml` and `cre-workflow/workflow.yaml` for both `staging-settings` and `production-settings`.
 
 ---
 
@@ -125,9 +135,11 @@ Two quintessential demonstrations of the AI Blueprint philosophy occurred during
 | Git Commit Staging & Review | **Final Authority** | Proposed & Executed |
 | Upstream Issue Formulation | Reviewer | **Synthesized & Formatted** |
 | Multi-Page UI/UX Engineering | Design Visionary | **Engineered & Tested** |
+| CRE Confidential Bootcamp Alignment | **Provided Source & Recorded Sessions** | **Analyzed Transcripts & Refactored Workflow** |
 
 ---
 
-## 5. Conclusion
+## 6. Conclusion
 
 By treating AI as an intelligent, disciplined pair-programmer under human architectural direction, AquaGhost demonstrates how modern engineering teams can build complex, multi-protocol DeFi security systems with speed, accountability, and zero hallucinated drift.
+
