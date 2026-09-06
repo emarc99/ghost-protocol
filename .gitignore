@@ -30,4 +30,7 @@ Thumbs.db
 # Scratch & build temporary files
 scratch/
 *.cre_build_tmp.js
+*.wasm.br.b64
+*.wasm
+
 

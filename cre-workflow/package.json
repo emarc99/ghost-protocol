@@ -1,6 +1,6 @@
 {
   "name": "aquaghost-cre-workflow",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "description": "Chainlink Runtime Environment (CRE) confidential workflow sentinel for AquaGhost Protocol",
   "main": "dist/main.js",
@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@chainlink/cre-sdk": "^1.19.1",
-    "ethers": "^6.13.0",
     "viem": "^2.56.3",
     "zod": "^4.5.4"
   },

@@ -26,7 +26,7 @@ export type Config = z.infer<typeof configSchema>;
 export const onCronTrigger = async (runtime: TeeRuntime<Config>): Promise<string> => {
   const config = runtime.config;
 
-  runtime.log("--- AquaGhost CRE Sentinel Running Inside AWS Nitro TEE ---");
+  runtime.log("--- AquaGhost CRE Sentinel v1.0.0 Running Inside AWS Nitro TEE ---");
 
   // Step 1: Securely access confidential policy & signing secrets from Vault DON
   let enclaveSignerKey = "0x00000000000000000000000000000000000000000000000000000000000a11ce";
