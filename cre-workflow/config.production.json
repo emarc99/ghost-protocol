@@ -1,6 +1,6 @@
 {
   "schedule": "0 */1 * * * *",
-  "subgraphUrl": "https://api.thegraph.com/subgraphs/name/messari/uniswap-v3-ethereum",
+  "subgraphUrl": "https://gateway.thegraph.com/api/public/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV",
   "poolTarget": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
   "riskThresholdBps": 150,
   "maxSlippageBps": 500,
