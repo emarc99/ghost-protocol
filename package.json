@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "python -m http.server 3000 -d frontend",
-    "simulate": "node --experimental-strip-types scripts/simulate_jit_attack.ts"
+    "simulate": "node --experimental-strip-types scripts/simulate_jit_attack.ts",
+    "test:live": "node --experimental-strip-types scripts/test_live_anvil_integration.ts"
   },
   "dependencies": {
     "ethers": "^6.13.0"
