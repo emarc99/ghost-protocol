@@ -4,6 +4,7 @@
   "description": "Autonomous Confidential Liquidity Defense & JIT Protection Protocol",
   "type": "module",
   "scripts": {
+    "dev": "python -m http.server 3000 -d frontend",
     "simulate": "node --experimental-strip-types scripts/simulate_jit_attack.ts"
   },
   "dependencies": {
