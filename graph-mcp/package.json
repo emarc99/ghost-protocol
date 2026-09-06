@@ -1,0 +1,25 @@
+{
+  "name": "aquaghost-graph-mcp",
+  "version": "0.1.0",
+  "description": "The Graph Subgraph Model Context Protocol (MCP) Server for AquaGhost AI Sentinels",
+  "type": "module",
+  "main": "src/server.ts",
+  "scripts": {
+    "start": "node --experimental-strip-types src/server.ts",
+    "test": "node --experimental-strip-types src/test_client.ts"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "zod": "^3.24.2"
+  },
+  "keywords": [
+    "the-graph",
+    "mcp",
+    "model-context-protocol",
+    "uniswap",
+    "subgraph",
+    "mev-defense"
+  ],
+  "author": "AquaGhost Team",
+  "license": "MIT"
+}

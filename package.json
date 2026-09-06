@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "python -m http.server 3000 -d frontend",
     "simulate": "node --experimental-strip-types scripts/simulate_jit_attack.ts",
-    "test:live": "node --experimental-strip-types scripts/test_live_anvil_integration.ts"
+    "test:live": "node --experimental-strip-types scripts/test_live_anvil_integration.ts",
+    "mcp:graph": "node --experimental-strip-types graph-mcp/src/server.ts",
+    "test:mcp": "node --experimental-strip-types graph-mcp/src/test_client.ts"
   },
   "dependencies": {
     "ethers": "^6.13.0"
