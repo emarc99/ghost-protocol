@@ -90,20 +90,22 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `e4f97f0` | `docs(uniswap)` | Incorporate ETHOnline 2026 insights on HookList, API telemetry, and Permit2 |
 | `a1b87d4` | `chore` | Add dev script to package.json for local dashboard serving |
 | `b17f113` | `feat(frontend)` | Implement multi-page dashboard for Aqua Vault, CRE Sentinel, and Uniswap Firewall |
+| `ec1f814` | `docs` | Update AI assistance ledger with canonical Aqua methods, Uniswap feedback, and frontend delivery |
+| `1d91bf1` | `chore` | Ignore contracts/broadcast in .gitignore |
+| `1a958bc` | `feat(deploy)` | Add Anvil deployment script and verification runner with seeded tokens |
+| `4661ed2` | `feat(frontend)` | Integrate Web3WalletManager and ethers.js for live Anvil on-chain interaction |
 
 ---
 
 ## 4. Key Case Study: Human-as-Architect Intervention
 
-A quintessential demonstration of the AI Blueprint philosophy occurred during development when the agent considered moving toward UI prototyping:
-* **Human Architectural Override:** The human architect immediately halted premature frontend scaffolding: *"how can you think of UI if contracts side isnt ready? do deep research, make no mistake, and ensure problem our project is solving is real. Then complete the contract with deep comprehensive testing validating all key functions in contract, add fuzz tests too."*
-* **Systemic Response:** Rather than continuing to "vibe code" visual components, the agent pivoted 100% to core cryptography, protocol mechanics, EVM stack optimization, and Foundry fuzzing:
-  1. Implemented complete Uniswap v4 `BaseHook` callbacks and permissions.
-  2. Upgraded `AquaGhostHook` and `AquaGhostApp` with ECDSA signature verification, replay protection (`executedNonces`), structured `ShiftParams`, and canonical `IAquaApp` methods (`quoteExactInput`, `quoteExactOutput`, `swapExactInput`, `swapExactOutput`).
-  3. Formulated 22 comprehensive unit and property-based fuzz tests in [`contracts/test/AquaGhost.t.sol`](file:///contracts/test/AquaGhost.t.sol) (256 runs each for dynamic fees, unauthorized signer rejections, defensive repositioning, and sniper blocking).
-  4. Resolved TypeScript compilation friction with `@chainlink/cre-sdk@1.19.1` and added Issue 4 to upstream sponsor feedback ledgers.
-  5. Synthesized ETHOnline 2026 workshops from Angela Ocando (Uniswap) and Tanner Moore (1inch Aqua) to enrich upstream sponsor issues and protocol architecture.
-  6. Implemented a dedicated multi-page frontend dashboard with interactive simulation workflows, sound synthesis, and real-time state synchronization.
+Two quintessential demonstrations of the AI Blueprint philosophy occurred during development:
+1. **Halting Premature Visual Scaffolding:** The human architect halted early UI vibe-coding to demand 100% contract completeness, formal interface adherence, and property-based fuzzing. The agent pivoted to Foundry fuzz testing (22/22 tests passing across 256 runs).
+2. **Rejecting False Client-Side Simulations:** When the UI demonstrated mock reverts, the human architect challenged the agent: *"on-chain? dont you need my wallet to run on-chain txns, or everything are false simulations"*. Rather than maintaining illusions, the agent acknowledged the distinction immediately and executed a complete local testnet deployment:
+   - Spun up a live Foundry `anvil` node on port `8545` (Chain ID `31337`).
+   - Deployed `AquaGhostApp`, `AquaGhostHook`, `MockAqua`, `MockPoolCaller`, and test ERC20s (`WETH` and `USDC`) with real contract addresses.
+   - Seeded test accounts with 500 WETH and 1,000,000 USDC.
+   - Integrated `ethers.js` and `Web3WalletManager` into the frontend dashboard for live `window.ethereum` MetaMask signing and real on-chain transaction broadcast.
 
 ---
 
