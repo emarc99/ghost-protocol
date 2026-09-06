@@ -94,6 +94,8 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `1d91bf1` | `chore` | Ignore contracts/broadcast in .gitignore |
 | `1a958bc` | `feat(deploy)` | Add Anvil deployment script and verification runner with seeded tokens |
 | `4661ed2` | `feat(frontend)` | Integrate Web3WalletManager and ethers.js for live Anvil on-chain interaction |
+| `da640e3` | `chore` | Add test:live script to package.json for on-chain Anvil integration test |
+| `0676b25` | `test(anvil)` | Add end-to-end live on-chain integration test against running Anvil node |
 
 ---
 
