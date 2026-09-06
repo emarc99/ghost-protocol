@@ -41,3 +41,29 @@ Provide an official CLI command or integration with `@graphprotocol/mcp-client`:
 npx graph-mcp typegen --subgraph <subgraph-id-or-url> --output ./src/types/subgraph.d.ts
 ```
 This guarantees end-to-end type safety between the Subgraph schema and the AI agent's prompt reasoning engine.
+
+---
+
+## 4. Issue 3: [Error Handling] Standardized MCP Error Normalization for Gateway vs. Indexing Errors
+
+### Context
+When integrating Subgraph MCP with autonomous DeFi defense systems (such as AquaGhost's JIT sentinel), AI agents must distinguish between:
+1. **Network transport failures** (e.g. HTTP 504 / DNS).
+2. **Gateway authentication/quota limits** (e.g. missing API key or GRT query balance depletion).
+3. **Subgraph indexing lag / entity not found** (e.g. query returned `data: { pool: null }`).
+
+### Problem & DX Friction
+In current client implementations, GraphQL errors (`errors: [{ message }]`) are returned inside HTTP 200 responses, while gateway issues return HTTP 4xx/5xx. AI agents parsing MCP tool responses without standardized error codes may interpret a missing pool as "zero liquidity", triggering false-positive defensive emergency modes.
+
+### Suggested Solution
+Introduce standardized MCP error structures for The Graph:
+```typescript
+interface GraphMcpError {
+  code: "INDEXING_LAG" | "QUOTA_EXCEEDED" | "INVALID_SUBGRAPH_ID" | "TRANSPORT_ERROR";
+  subgraphId: string;
+  isRetryable: boolean;
+  message: string;
+}
+```
+Exposing this via `@modelcontextprotocol/sdk` ensures agents execute safe fallback routines instead of catastrophic emergency halts.
+

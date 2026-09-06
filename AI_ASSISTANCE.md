@@ -106,6 +106,8 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `e86665c` | `chore(cre)` | Clean unused dependencies and ignore wasm build artifacts |
 | `e1d4e79` | `fix(cre)` | Update cron schedule to 1m to comply with CRE 30s rate limit quota |
 | `d3ddb4b` | `feat(frontend)` | Connect sentinel dashboard to live CRE deployment 0056b79a |
+| `cfe5377` | `docs(ai)` | Update AI_ASSISTANCE.md with live CRE deployment verification receipts |
+| `34e64fc` | `feat(graph-mcp)` | Scaffold dedicated The Graph Subgraph MCP server package |
 
 ---
 
@@ -129,6 +131,10 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
    - **Active Workflow ID:** `0056b79abdf926dbb2a01ba70b8c95eb35696ce16c8346234adaef4834e92621`.
    - **Live Execution Proofs:** Executions (`fc77657e1834...`, `ff1feec3e460...`, `a09eff99fe14...`) run live across 9 decentralized oracle nodes in DON family `zone-a` inside AWS Nitro TEE enclaves (`us-west-2`), achieving consensus on defensive shift attestations within 9-14 seconds.
    - **Frontend Integration:** Live workflow telemetry and execution telemetry are surfaced dynamically in the Sentinel UI dashboard (`frontend/sentinel.html`).
+5. **Scaffolding The Graph Subgraph MCP Server (Targeting Partner Prize):** Following human directive to scaffold a dedicated architecture for The Graph, created `@aquaghost/graph-mcp` (`graph-mcp/`):
+   - Implemented Model Context Protocol (MCP) server over standard JSON-RPC 2.0 `stdio` transport.
+   - Exposed 3 dedicated agent tools: `graph_get_pool_snapshot`, `graph_get_tick_liquidity`, and `graph_detect_jit_threat`.
+   - Verified end-to-end functionality against The Graph Network decentralized gateway (`npm run test:mcp`), and submitted upstream DX feedback regarding streaming MCP transport and error normalization in `docs/sponsor-issues/THE_GRAPH_MCP_FEEDBACK.md`.
 
 ---
 
