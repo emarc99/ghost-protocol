@@ -95,10 +95,17 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `1a958bc` | `feat(deploy)` | Add Anvil deployment script and verification runner with seeded tokens |
 | `4661ed2` | `feat(frontend)` | Integrate Web3WalletManager and ethers.js for live Anvil on-chain interaction |
 | `da640e3` | `chore` | Add test:live script to package.json for on-chain Anvil integration test |
+| `0676b25` | `test(anvil)` | Add end-to-end live on-chain integration test against running Anvil node |
+| `937ae87` | `docs` | Add test:live and live on-chain integration test records to AI_ASSISTANCE.md |
 | `1e241b0` | `chore` | Ignore scratch directory and build temporary files |
 | `b5e48f3` | `feat(skill)` | Integrate official SmartContractKit chainlink-cre-skill for agents |
 | `2aec4ed` | `feat(cre)` | Align workflow with official CRE Confidential spec |
-| `pending` | `docs(cre)` | Append Issue 5 and Issue 6 to CHAINLINK_CRE_ISSUES.md based on Bootcamp learnings |
+| `b9d15b3` | `docs(cre)` | Document Bootcamp issues 5 and 6 and update AI assistance ledger |
+| `c8a0978` | `feat(cre)` | Set deployment-registry to private in workflow.yaml |
+| `d616e63` | `feat(frontend)` | Display real CRE deployment ID and Vault DON key in sentinel dashboard |
+| `e86665c` | `chore(cre)` | Clean unused dependencies and ignore wasm build artifacts |
+| `e1d4e79` | `fix(cre)` | Update cron schedule to 1m to comply with CRE 30s rate limit quota |
+| `d3ddb4b` | `feat(frontend)` | Connect sentinel dashboard to live CRE deployment 0056b79a |
 
 ---
 
@@ -118,6 +125,10 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
    - **Policy-as-Secrets:** Storing JIT anomaly detection thresholds and slippage parameters in the Vault DON so predatory MEV snipers cannot inspect or front-run the defense boundaries.
    - **Consensus Hand-off via `runtime.usingTheDons()`:** Crossing the confidentiality boundary back to the Decentralized Oracle Network for consensus report generation (`donRuntime.report({ encoderName: "evm", signingAlgo: "ecdsa", hashingAlgo: "keccak256" })`), delivering verified cryptographic attestations to Uniswap v4 and 1inch Aqua contracts.
    - **Standard Project Configuration:** Configuring root `project.yaml` and `cre-workflow/workflow.yaml` for both `staging-settings` and `production-settings`.
+4. **Live Deployment to Chainlink Private Registry & AWS Nitro Enclave Consensus:** Moving beyond local mock simulations, the human architect authenticated with Chainlink (`emarc_org`, `org_S12N0M30f9cNax7i`), created encrypted production secrets in the Chainlink Vault DON (`ENCLAVE_SIGNER_KEY`, `GRAPH_API_KEY`, `MAX_SLIPPAGE_BPS`, `RISK_THRESHOLD_BPS`), and deployed `aquaghost-sentinel-staging` to the Chainlink Private Registry:
+   - **Active Workflow ID:** `0056b79abdf926dbb2a01ba70b8c95eb35696ce16c8346234adaef4834e92621`.
+   - **Live Execution Proofs:** Executions (`fc77657e1834...`, `ff1feec3e460...`, `a09eff99fe14...`) run live across 9 decentralized oracle nodes in DON family `zone-a` inside AWS Nitro TEE enclaves (`us-west-2`), achieving consensus on defensive shift attestations within 9-14 seconds.
+   - **Frontend Integration:** Live workflow telemetry and execution telemetry are surfaced dynamically in the Sentinel UI dashboard (`frontend/sentinel.html`).
 
 ---
 
