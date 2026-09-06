@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AquaGhost Protocol | Autonomous Confidential Liquidity Defense</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .hero-section {
+      text-align: center;
+      padding: 3.5rem 1rem 3rem 1rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: rgba(0, 242, 255, 0.08);
+      border: 1px solid rgba(0, 242, 255, 0.25);
+      color: var(--color-cyan);
+      font-size: 0.85rem;
+      font-family: var(--font-mono);
+      margin-bottom: 1.5rem;
+    }
+    .hero-title {
+      font-size: 3.2rem;
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1.15;
+      margin-bottom: 1.25rem;
+      background: linear-gradient(135deg, #ffffff 40%, #8ca6ff 80%, #00f2ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+      font-size: 1.25rem;
+      color: var(--color-text-muted);
+      max-width: 760px;
+      margin: 0 auto 2.5rem auto;
+      line-height: 1.6;
+    }
+    .module-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 2rem;
+      transition: all var(--transition-smooth);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+    .module-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0, 242, 255, 0.4);
+      box-shadow: 0 12px 30px rgba(0, 242, 255, 0.12);
+    }
+    .module-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background: var(--card-accent, var(--color-cyan));
+    }
+    .module-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .module-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      margin-bottom: 0.65rem;
+    }
+    .module-desc {
+      color: var(--color-text-muted);
+      font-size: 0.95rem;
+      line-height: 1.55;
+      margin-bottom: 1.5rem;
+    }
+    .sponsor-bar {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+    }
+    .sponsor-logos {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      flex-wrap: wrap;
+      margin-top: 1.25rem;
+    }
+    .sponsor-pill {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 0.85rem;
+      color: #fff;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="top-nav">
+    <a href="index.html" class="brand-container">
+      <div class="brand-icon">👻</div>
+      <div>
+        <span class="brand-name">AquaGhost</span>
+        <span class="brand-tag">v0.1.0-alpha</span>
+      </div>
+    </a>
+
+    <nav class="nav-links">
+      <a href="vault.html" class="nav-link">
+        <span>💼</span> 1inch Aqua Vault
+      </a>
+      <a href="sentinel.html" class="nav-link">
+        <span>🛡️</span> CRE Nitro Sentinel
+      </a>
+      <a href="firewall.html" class="nav-link">
+        <span>🦄</span> Uniswap v4 Firewall
+      </a>
+    </nav>
+
+    <div class="status-pills">
+      <div class="pulse-indicator">
+        <span class="pulse-dot"></span>
+        <span>DEFENSE READY</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-badge">
+      <span>🛡️</span> ETHGlobal Online 2026 Submission
+    </div>
+    <h1 class="hero-title">
+      Autonomous Confidential Liquidity Defense & JIT Protection
+    </h1>
+    <p class="hero-subtitle">
+      The first multi-protocol liquidity firewall combining <strong>1inch Aqua</strong> self-custodial commitments, <strong>Chainlink CRE AWS Nitro Enclaves</strong>, and <strong>Uniswap v4</strong> on-chain Hook enforcement.
+    </p>
+    <div style="display: flex; justify-content: center; gap: 1rem;">
+      <a href="vault.html" class="btn btn-primary" style="padding: 0.85rem 1.75rem; font-size: 1.05rem;">
+        <span>🚀</span> Enter Launchpad
+      </a>
+      <a href="https://github.com/emarc99/ghost-protocol" target="_blank" class="btn btn-secondary" style="padding: 0.85rem 1.75rem; font-size: 1.05rem;">
+        <span>📜</span> View Smart Contracts
+      </a>
+    </div>
+  </div>
+
+  <!-- 3 Dedicated Multi-Page Modules -->
+  <main class="page-container" style="padding-top: 0;">
+    <div class="grid-3">
+      
+      <!-- Module 1: 1inch Aqua Vault -->
+      <div class="module-card" style="--card-accent: var(--color-cyan);">
+        <div>
+          <div class="module-icon">💼</div>
+          <h2 class="module-title">1inch Aqua LP Vault</h2>
+          <p class="module-desc">
+            Sovereign liquidity where tokens never leave your wallet. Commit a single balance across multiple yield strategies simultaneously without token lockups.
+          </p>
+          <div style="font-size: 0.82rem; color: var(--color-cyan); font-family: var(--font-mono); margin-bottom: 1.5rem;">
+            &bull; Non-Custodial Multi-Commitment<br>
+            &bull; dock() & ship() Atomic Settlement<br>
+            &bull; Retain DAO Governance Rights
+          </div>
+        </div>
+        <a href="vault.html" class="btn btn-primary" style="width: 100%;">
+          <span>💼</span> Open Aqua Vault &rarr;
+        </a>
+      </div>
+
+      <!-- Module 2: Chainlink CRE Nitro Sentinel -->
+      <div class="module-card" style="--card-accent: var(--color-purple);">
+        <div>
+          <div class="module-icon">🛡️</div>
+          <h2 class="module-title">CRE Nitro Enclave Sentinel</h2>
+          <p class="module-desc">
+            Hardware-isolated AWS Nitro Enclave monitoring live mempool volume spikes and Subgraph MCP depth, emitting verified ECDSA attestations to protect makers.
+          </p>
+          <div style="font-size: 0.82rem; color: var(--color-purple); font-family: var(--font-mono); margin-bottom: 1.5rem;">
+            &bull; handlerInTee() Confidentiality<br>
+            &bull; Deterministic Hardware Guardrails<br>
+            &bull; Zero Public Mempool Leaks
+          </div>
+        </div>
+        <a href="sentinel.html" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, var(--color-purple), #7928ca);">
+          <span>🛡️</span> Open CRE Sentinel &rarr;
+        </a>
+      </div>
+
+      <!-- Module 3: Uniswap v4 Firewall -->
+      <div class="module-card" style="--card-accent: var(--color-emerald);">
+        <div>
+          <div class="module-icon">🦄</div>
+          <h2 class="module-title">Uniswap v4 Hook Firewall</h2>
+          <p class="module-desc">
+            On-chain gatekeeper on PoolManager intercepting predatory beforeAddLiquidity calls (SniperAttackBlocked error) and enforcing dynamic fee overrides.
+          </p>
+          <div style="font-size: 0.82rem; color: var(--color-emerald); font-family: var(--font-mono); margin-bottom: 1.5rem;">
+            &bull; 0x00c0... Address Permission Bitmask<br>
+            &bull; Dynamic 0.30% &rarr; 2.50% Fee Override<br>
+            &bull; 22/22 Foundry Fuzz Tests Passed
+          </div>
+        </div>
+        <a href="firewall.html" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, var(--color-emerald), #00b377); color: #04120a;">
+          <span>🦄</span> Open v4 Firewall &rarr;
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Sponsors & Verifiable Proofs -->
+    <div class="sponsor-bar">
+      <div style="font-size: 0.82rem; text-transform: uppercase; letter-spacing: 1px; color: var(--color-text-dim);">
+        Integrated Protocols & Sponsor Tracks
+      </div>
+      <div class="sponsor-logos">
+        <div class="sponsor-pill">🔗 Chainlink CRE & Nitro Enclaves</div>
+        <div class="sponsor-pill">💧 1inch Aqua Protocol</div>
+        <div class="sponsor-pill">🦄 Uniswap v4 Hooks</div>
+        <div class="sponsor-pill">📊 The Graph Subgraph MCP</div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div>AquaGhost Protocol &bull; ETHGlobal Online 2026 Submission</div>
+    <div class="footer-links">
+      <a href="https://github.com/emarc99/ghost-protocol" target="_blank">GitHub</a>
+      <a href="vault.html">Aqua Vault</a>
+      <a href="sentinel.html">CRE Sentinel</a>
+      <a href="firewall.html">v4 Firewall</a>
+    </div>
+  </footer>
+
+  <script src="js/shared.js"></script>
+</body>
+</html>

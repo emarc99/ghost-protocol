@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Uniswap v4 Firewall & Pool Inspector | AquaGhost Protocol</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/firewall.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="top-nav">
+    <a href="index.html" class="brand-container">
+      <div class="brand-icon">👻</div>
+      <div>
+        <span class="brand-name">AquaGhost</span>
+        <span class="brand-tag">v0.1.0-alpha</span>
+      </div>
+    </a>
+
+    <nav class="nav-links">
+      <a href="vault.html" class="nav-link">
+        <span>💼</span> 1inch Aqua Vault
+      </a>
+      <a href="sentinel.html" class="nav-link">
+        <span>🛡️</span> CRE Nitro Sentinel
+      </a>
+      <a href="firewall.html" class="nav-link active">
+        <span>🦄</span> Uniswap v4 Firewall
+      </a>
+    </nav>
+
+    <div class="status-pills">
+      <div class="pulse-indicator" id="firewall-status-pill">
+        <span class="pulse-dot"></span>
+        <span id="firewall-status-text">HOOK: STANDBY</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="page-container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">
+          <span>🦄</span> Uniswap v4 Firewall & Pool Inspector
+        </h1>
+        <p class="page-subtitle">
+          On-Chain Gatekeeper & Dynamic Fee Override powered by AquaGhostHook.sol on PoolManager.
+        </p>
+      </div>
+      <div style="display: flex; gap: 0.75rem;">
+        <button id="btn-toggle-defense" class="btn btn-primary">
+          <span>🛡️</span> Toggle Defense Override
+        </button>
+        <button id="btn-sim-sniper-add" class="btn btn-danger">
+          <span>💥</span> Test Sniper beforeAddLiquidity()
+        </button>
+      </div>
+    </div>
+
+    <!-- Top Pool Status Row -->
+    <div class="grid-3" style="margin-bottom: 2rem;">
+      <div class="glass-panel metric-box">
+        <div class="metric-label">Uniswap v4 PoolKey</div>
+        <div class="metric-value" style="font-size: 1.25rem; font-family: var(--font-mono); color: var(--color-cyan);">
+          WETH / USDC (3000, 60)
+        </div>
+        <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">
+          PoolId: 0x88e6...5640 &bull; Hook Address Bitmask
+        </div>
+      </div>
+
+      <div class="glass-panel metric-box">
+        <div class="metric-label">Hook Permissions Bitmask</div>
+        <div class="metric-value" style="font-size: 1.1rem; font-family: var(--font-mono); color: var(--color-purple);">
+          0x00c0...8899
+        </div>
+        <div style="font-size: 0.8rem; color: var(--color-emerald); margin-top: 4px;">
+          BEFORE_SWAP | BEFORE_ADD_LIQUIDITY
+        </div>
+      </div>
+
+      <div class="glass-panel metric-box">
+        <div class="metric-label">JIT Attacks Neutralized</div>
+        <div class="metric-value" style="color: var(--color-emerald);" id="val-blocked-attacks">
+          14 Blocked
+        </div>
+        <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">
+          Total Gas Saved: ~420,000 gwei
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid: Concentrated Liquidity Chart & Dynamic Fee Gauge -->
+    <div class="grid-main-sidebar">
+      
+      <!-- Left: Interactive Tick Chart & Revert Inspector -->
+      <div>
+        <div class="glass-panel" style="margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="font-size: 1.2rem; font-weight: 600;">Concentrated Liquidity & Tick Depth Spectrum</h2>
+            <div style="display: flex; gap: 8px; font-size: 0.78rem; font-family: var(--font-mono);">
+              <span style="color: var(--color-cyan);">■ Honest Maker Depth</span>
+              <span style="color: var(--color-crimson);">■ Predatory JIT Sandwich</span>
+            </div>
+          </div>
+
+          <div class="tick-chart-container">
+            <svg class="chart-svg" viewBox="0 0 700 200" preserveAspectRatio="none">
+              <!-- Grid Lines -->
+              <line x1="0" y1="160" x2="700" y2="160" stroke="#1f2438" stroke-width="1"/>
+              <line x1="0" y1="100" x2="700" y2="100" stroke="#1f2438" stroke-width="1" stroke-dasharray="4"/>
+              
+              <!-- Honest LP Normal Distribution -->
+              <rect x="180" y="110" width="340" height="50" fill="rgba(0, 242, 255, 0.22)" stroke="var(--color-cyan)" stroke-width="1.5" rx="3"/>
+              
+              <!-- Predatory Sniper Ultra-Tight Tick Band -->
+              <rect id="svg-sniper-bar" x="335" y="30" width="30" height="130" fill="rgba(255, 0, 85, 0.45)" stroke="var(--color-crimson)" stroke-width="2" rx="2" style="display: none;"/>
+              
+              <!-- Current Market Tick Indicator -->
+              <line x1="350" y1="10" x2="350" y2="180" stroke="#fff" stroke-width="2" stroke-dasharray="3"/>
+              <text x="355" y="25" fill="#fff" font-size="11" font-family="monospace">Current Tick: -201,200</text>
+            </svg>
+          </div>
+
+          <!-- Revert Notification Banner -->
+          <div class="revert-banner" id="revert-banner">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-size: 1.5rem;">🛑</span>
+              <div>
+                <div style="font-weight: 700; color: var(--color-crimson);">
+                  TRANSACTION INTERCEPTED & REVERTED ON-CHAIN!
+                </div>
+                <div style="font-size: 0.85rem; color: #f0f3fa; font-family: var(--font-mono); margin-top: 2px;">
+                  Custom Error: <span style="color: var(--color-cyan);">AquaGhostHook.SniperAttackBlocked(0xBAD0...0B07, 0x88e6...5640)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Terminal Logs -->
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <div class="terminal-dot dot-red"></div>
+              <div class="terminal-dot dot-yellow"></div>
+              <div class="terminal-dot dot-green"></div>
+            </div>
+            <div>UNISWAP V4 POOLMANAGER & HOOK TELEMETRY</div>
+          </div>
+          <div class="terminal-body" id="firewall-logs">
+            <div class="log-entry">
+              <span class="log-time">[Init]</span>
+              <span class="log-info">PoolManager initialized with AquaGhostHook (Address: 0x00c0...8899)</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">[Hook]</span>
+              <span class="log-info">Flags validated: BEFORE_SWAP, BEFORE_ADD_LIQUIDITY, OVERRIDE_FEE</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">[State]</span>
+              <span class="log-success">Base swap fee: 30 bps (0.30%). Defense mode: STANDBY.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right: Dynamic Fee Gauge & Foundry Verification Receipts -->
+      <div>
+        
+        <!-- Dynamic Fee Gauge -->
+        <div class="fee-gauge-container glass-panel" style="margin-bottom: 1.5rem;">
+          <div class="metric-label" style="margin-bottom: 1rem;">Pool Swap Fee Override</div>
+          
+          <div class="gauge-circle" id="gauge-circle">
+            <div class="gauge-value" id="gauge-fee-val">0.30%</div>
+            <div style="font-size: 0.75rem; color: var(--color-text-muted);" id="gauge-bps-val">30 BPS</div>
+          </div>
+
+          <div style="font-size: 0.85rem; font-weight: 600;" id="gauge-mode-label">
+            Normal Trading Tier
+          </div>
+          <div style="font-size: 0.78rem; color: var(--color-text-muted); margin-top: 4px;">
+            Dynamic fee applied via beforeSwap()
+          </div>
+        </div>
+
+        <!-- Foundry Verifiable Test Receipts -->
+        <div class="glass-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+            <h2 style="font-size: 1.15rem; font-weight: 600;">Foundry Verifiable Receipts</h2>
+            <span class="status-badge badge-normal">22/22 PASSED</span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.85rem;">
+            Property-based fuzz suites (256 runs each) proving mathematical safety:
+          </p>
+
+          <div class="test-receipt-list">
+            <div class="test-receipt-item">
+              <span>testFuzz_Hook_SniperBlocking</span>
+              <span class="test-receipt-pass">[PASS (256 runs)]</span>
+            </div>
+            <div class="test-receipt-item">
+              <span>testFuzz_Hook_DynamicFee</span>
+              <span class="test-receipt-pass">[PASS (256 runs)]</span>
+            </div>
+            <div class="test-receipt-item">
+              <span>testFuzz_App_DefensiveShift</span>
+              <span class="test-receipt-pass">[PASS (256 runs)]</span>
+            </div>
+            <div class="test-receipt-item">
+              <span>testFuzz_App_RejectUnauthorized</span>
+              <span class="test-receipt-pass">[PASS (256 runs)]</span>
+            </div>
+            <div class="test-receipt-item">
+              <span>test_App_SwapExactInput_Success</span>
+              <span class="test-receipt-pass">[PASS (gas: 326k)]</span>
+            </div>
+            <div class="test-receipt-item">
+              <span>test_App_SwapExactOutput_Success</span>
+              <span class="test-receipt-pass">[PASS (gas: 326k)]</span>
+            </div>
+            <div class="test-receipt-item">
+              <span>test_Hook_SetDefenseMode_ValidSig</span>
+              <span class="test-receipt-pass">[PASS (gas: 100k)]</span>
+            </div>
+            <div class="test-receipt-item">
+              <span>test_Hook_ReplayNonceRevert</span>
+              <span class="test-receipt-pass">[PASS (gas: 113k)]</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div>AquaGhost Protocol &bull; ETHGlobal Online 2026 Submission</div>
+    <div class="footer-links">
+      <a href="vault.html">1inch Vault</a>
+      <a href="sentinel.html">CRE Sentinel</a>
+      <a href="https://github.com/emarc99/ghost-protocol" target="_blank">GitHub</a>
+    </div>
+  </footer>
+
+  <script src="js/shared.js"></script>
+  <script src="js/firewall.js"></script>
+</body>
+</html>

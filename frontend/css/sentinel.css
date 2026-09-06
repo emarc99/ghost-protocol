@@ -1,0 +1,109 @@
+/* Sentinel / TEE Specific Styles */
+
+.enclave-box {
+  border: 1px solid rgba(157, 78, 221, 0.35);
+  background: linear-gradient(180deg, rgba(20, 14, 30, 0.85), rgba(10, 12, 18, 0.95));
+  position: relative;
+  overflow: hidden;
+}
+
+.enclave-box::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-purple), var(--color-cyan), transparent);
+  animation: scan-line 3s infinite linear;
+}
+
+@keyframes scan-line {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.radar-container {
+  height: 220px;
+  background: radial-gradient(circle, rgba(0, 242, 255, 0.08) 0%, rgba(8, 9, 13, 0.9) 70%);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radar-sweep {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  border: 1px dashed rgba(0, 242, 255, 0.25);
+}
+
+.radar-sweep::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50%;
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-cyan), transparent);
+  transform-origin: 0% 0%;
+  animation: radar-rotate 4s infinite linear;
+}
+
+@keyframes radar-rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.guardrail-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.5rem;
+  border: 1px solid var(--border-color);
+  font-size: 0.88rem;
+}
+
+.guardrail-status-pass {
+  color: var(--color-emerald);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.attestation-card {
+  background: #06070a;
+  border: 1px solid rgba(0, 242, 255, 0.25);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: #c9d1d9;
+}
+
+.attestation-field {
+  margin-bottom: 0.45rem;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.attestation-key {
+  color: var(--color-text-dim);
+  width: 110px;
+  flex-shrink: 0;
+}
+
+.attestation-val {
+  color: var(--color-cyan);
+  word-break: break-all;
+}

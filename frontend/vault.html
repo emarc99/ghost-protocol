@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Non-Custodial LP Vault (1inch Aqua) | AquaGhost Protocol</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/vault.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="top-nav">
+    <a href="index.html" class="brand-container">
+      <div class="brand-icon">👻</div>
+      <div>
+        <span class="brand-name">AquaGhost</span>
+        <span class="brand-tag">v0.1.0-alpha</span>
+      </div>
+    </a>
+
+    <nav class="nav-links">
+      <a href="vault.html" class="nav-link active">
+        <span>💼</span> 1inch Aqua Vault
+      </a>
+      <a href="sentinel.html" class="nav-link">
+        <span>🛡️</span> CRE Nitro Sentinel
+      </a>
+      <a href="firewall.html" class="nav-link">
+        <span>🦄</span> Uniswap v4 Firewall
+      </a>
+    </nav>
+
+    <div class="status-pills">
+      <div class="pulse-indicator">
+        <span class="pulse-dot"></span>
+        <span>AQUA ROUTER: SYNCED</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="page-container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">
+          <span>💼</span> Non-Custodial LP Vault
+        </h1>
+        <p class="page-subtitle">
+          Sovereign Liquidity Provisioning via 1inch Aqua. Zero token lockups, zero smart contract custody risk.
+        </p>
+      </div>
+      <div>
+        <button id="btn-ship-modal" class="btn btn-primary">
+          <span>🚢</span> Ship New Strategy
+        </button>
+      </div>
+    </div>
+
+    <!-- Banner explaining 1inch Aqua Non-Custodial Superpower -->
+    <div class="vault-banner">
+      <div class="banner-content">
+        <div class="banner-icon">🔐</div>
+        <div>
+          <div class="banner-title">100% Non-Custodial Maker Liquidity</div>
+          <div class="banner-desc">
+            Your tokens never leave your personal wallet until the exact millisecond of trade execution. You retain full DAO voting power and complete freedom to transfer tokens anytime.
+          </div>
+        </div>
+      </div>
+      <button id="btn-sim-swap" class="btn btn-secondary">
+        <span>⚡</span> Simulate Swapper Fill
+      </button>
+    </div>
+
+    <!-- Top Metrics Overview -->
+    <div class="grid-3" style="margin-bottom: 2rem;">
+      <div class="glass-panel metric-box">
+        <div class="metric-label">Physical Wallet Capital</div>
+        <div class="metric-value" id="val-physical-capital">$80,000</div>
+        <div style="font-size: 0.8rem; color: var(--color-emerald); margin-top: 4px;">
+          ✓ Tokens 100% In Cold/Hot Wallet
+        </div>
+      </div>
+
+      <div class="glass-panel metric-box efficiency-card">
+        <div class="metric-label">Effective Market Liquidity (Aqua Multiplier)</div>
+        <div class="metric-value" style="color: var(--color-cyan);" id="val-effective-liquidity">$87,000</div>
+        <div style="font-size: 0.8rem; color: var(--color-cyan); margin-top: 4px;">
+          ⚡ 108% Capital Efficiency (Shared Inventory)
+        </div>
+      </div>
+
+      <div class="glass-panel metric-box">
+        <div class="metric-label">Registered Strategies</div>
+        <div class="metric-value" id="val-active-strategies">3 Active</div>
+        <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">
+          1inch Aqua Router: 0x1111...2A65
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="grid-main-sidebar">
+      
+      <!-- Left: Active Aqua Strategies -->
+      <div class="glass-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 style="font-size: 1.25rem; font-weight: 600;">Active 1inch Aqua Strategies</h2>
+          <span style="font-size: 0.82rem; color: var(--color-text-muted); font-family: var(--font-mono);">
+            Router Calls: dock() & ship()
+          </span>
+        </div>
+
+        <table class="strategy-table">
+          <thead>
+            <tr>
+              <th>Strategy Name</th>
+              <th>Pair & App</th>
+              <th>Tick Range / Tier</th>
+              <th>Effective Liq.</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="strategy-table-body">
+            <!-- Rendered dynamically -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Right: Sovereign Wallet Balances -->
+      <div>
+        <div class="glass-panel" style="margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.15rem; font-weight: 600; margin-bottom: 0.4rem;">
+            Sovereign Wallet Balances
+          </h2>
+          <p style="font-size: 0.82rem; color: var(--color-text-muted); margin-bottom: 1.2rem;">
+            Maker: <span id="maker-wallet-display" style="font-family: var(--font-mono); color: var(--color-cyan);"></span>
+          </p>
+
+          <div class="balance-item">
+            <div class="token-info">
+              <div class="token-badge token-eth">ETH</div>
+              <div>
+                <div style="font-weight: 600;">Wrapped Ether</div>
+                <div style="font-size: 0.75rem; color: var(--color-text-dim);">WETH</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-family: var(--font-mono); font-weight: 700;" id="bal-weth">10.00 ETH</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-muted);">$30,000</div>
+            </div>
+          </div>
+
+          <div class="balance-item">
+            <div class="token-info">
+              <div class="token-badge token-usdc">USDC</div>
+              <div>
+                <div style="font-weight: 600;">USD Coin</div>
+                <div style="font-size: 0.75rem; color: var(--color-text-dim);">Circle</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-family: var(--font-mono); font-weight: 700;" id="bal-usdc">25,000 USDC</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-muted);">$25,000</div>
+            </div>
+          </div>
+
+          <div class="balance-item">
+            <div class="token-info">
+              <div class="token-badge token-aave">AAVE</div>
+              <div>
+                <div style="font-weight: 600;">Aave Token</div>
+                <div style="font-size: 0.75rem; color: var(--color-text-dim);">Governance</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-family: var(--font-mono); font-weight: 700;" id="bal-aave">150.00 AAVE</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-muted);">$15,000</div>
+            </div>
+          </div>
+
+          <div class="balance-item">
+            <div class="token-info">
+              <div class="token-badge token-usdt">USDT</div>
+              <div>
+                <div style="font-weight: 600;">Tether USD</div>
+                <div style="font-size: 0.75rem; color: var(--color-text-dim);">Tether</div>
+              </div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-family: var(--font-mono); font-weight: 700;" id="bal-usdt">10,000 USDT</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-muted);">$10,000</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strategy Event Feed -->
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <div class="terminal-dot dot-red"></div>
+              <div class="terminal-dot dot-yellow"></div>
+              <div class="terminal-dot dot-green"></div>
+            </div>
+            <div>AQUA ROUTER EMISSIONS</div>
+          </div>
+          <div class="terminal-body" id="vault-events-log">
+            <div class="log-entry">
+              <span class="log-time">[Init]</span>
+              <span class="log-info">AquaGhostApp connected to 1inch Aqua Router (0x1111...2A65)</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">[Ship]</span>
+              <span class="log-success">Strategy strat-1 registered on-chain. Zero deposit required.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Ship Strategy Modal -->
+  <div class="modal-overlay" id="ship-modal">
+    <div class="modal-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.3rem; font-weight: 700;">🚢 Ship New Aqua Strategy</h3>
+        <button id="modal-close" style="background:none; border:none; color:var(--color-text-muted); font-size:1.5rem; cursor:pointer;">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--color-text-muted); margin-bottom: 1.25rem;">
+        Register a new virtual liquidity commitment. Tokens remain in your wallet!
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">Strategy Label</label>
+        <input type="text" id="input-strat-name" class="form-input" placeholder="e.g. WETH/USDC Defensive Band" value="WETH / USDC Secondary Yield">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Target Pair</label>
+        <select id="input-strat-pair" class="form-select">
+          <option value="WETH / USDC">WETH / USDC</option>
+          <option value="USDC / USDT">USDC / USDT</option>
+          <option value="WETH / AAVE">WETH / AAVE</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Aqua App Engine</label>
+        <select id="input-strat-app" class="form-select">
+          <option value="AquaGhostApp (v4/CRE Protected)">AquaGhostApp (v4/CRE Protected)</option>
+          <option value="Aqua Constant Product App">Aqua Constant Product App</option>
+          <option value="Aqua Flash Loan App">Aqua Flash Loan App</option>
+        </select>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;" class="form-group">
+        <div>
+          <label class="form-label">Fee Tier (BPS)</label>
+          <input type="number" id="input-strat-fee" class="form-input" value="30">
+        </div>
+        <div>
+          <label class="form-label">Effective Capital ($)</label>
+          <input type="number" id="input-strat-amount" class="form-input" value="20000">
+        </div>
+      </div>
+
+      <div style="margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.85rem;">
+        <button id="btn-cancel-modal" class="btn btn-secondary">Cancel</button>
+        <button id="btn-confirm-ship" class="btn btn-primary">🚢 Ship to Aqua</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div>AquaGhost Protocol &bull; ETHGlobal Online 2026 Submission</div>
+    <div class="footer-links">
+      <a href="https://github.com/emarc99/ghost-protocol" target="_blank">GitHub</a>
+      <a href="sentinel.html">CRE Sentinel</a>
+      <a href="firewall.html">Uniswap Hook</a>
+    </div>
+  </footer>
+
+  <script src="js/shared.js"></script>
+  <script src="js/vault.js"></script>
+</body>
+</html>

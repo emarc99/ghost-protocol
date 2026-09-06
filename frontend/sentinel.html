@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CRE Nitro Enclave Sentinel | AquaGhost Protocol</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/sentinel.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header class="top-nav">
+    <a href="index.html" class="brand-container">
+      <div class="brand-icon">👻</div>
+      <div>
+        <span class="brand-name">AquaGhost</span>
+        <span class="brand-tag">v0.1.0-alpha</span>
+      </div>
+    </a>
+
+    <nav class="nav-links">
+      <a href="vault.html" class="nav-link">
+        <span>💼</span> 1inch Aqua Vault
+      </a>
+      <a href="sentinel.html" class="nav-link active">
+        <span>🛡️</span> CRE Nitro Sentinel
+      </a>
+      <a href="firewall.html" class="nav-link">
+        <span>🦄</span> Uniswap v4 Firewall
+      </a>
+    </nav>
+
+    <div class="status-pills">
+      <div class="pulse-indicator" id="sentinel-status-pill">
+        <span class="pulse-dot"></span>
+        <span id="sentinel-status-text">TEE ENCLAVE: SECURE</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="page-container">
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">
+          <span>🛡️</span> Chainlink CRE AWS Nitro Sentinel
+        </h1>
+        <p class="page-subtitle">
+          Hardware-Isolated TEE Anomaly Detection, Subgraph MCP Ingestion & Cryptographic Attestation Engine.
+        </p>
+      </div>
+      <div>
+        <button id="btn-trigger-attack" class="btn btn-danger">
+          <span>🚨</span> Simulate JIT Sniper Attack
+        </button>
+      </div>
+    </div>
+
+    <!-- Top Status Cards -->
+    <div class="grid-3" style="margin-bottom: 2rem;">
+      <div class="glass-panel metric-box enclave-box">
+        <div class="metric-label">Hardware Enclave Isolation</div>
+        <div class="metric-value" style="color: var(--color-purple);">AWS Nitro TEE</div>
+        <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px; font-family: var(--font-mono);">
+          PCR0: e8c4...91f2 (Attested)
+        </div>
+      </div>
+
+      <div class="glass-panel metric-box">
+        <div class="metric-label">Execution Environment</div>
+        <div class="metric-value" style="font-size: 1.5rem; color: var(--color-cyan);">@chainlink/cre-sdk</div>
+        <div style="font-size: 0.8rem; color: var(--color-emerald); margin-top: 4px;">
+          handlerInTee() &bull; Vault DON Secrets
+        </div>
+      </div>
+
+      <div class="glass-panel metric-box">
+        <div class="metric-label">Enclave Signer Public Key</div>
+        <div class="metric-value" style="font-size: 1.15rem; word-break: break-all;" id="enclave-key-display">
+          0xb1E7...6792
+        </div>
+        <div style="font-size: 0.8rem; color: var(--color-text-muted); margin-top: 4px;">
+          ECDSA Secp256k1 Attestation Key
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="grid-main-sidebar">
+      
+      <!-- Left Column: Live Radar & Enclave Execution Stream -->
+      <div>
+        
+        <!-- Mempool Radar -->
+        <div class="glass-panel" style="margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="font-size: 1.2rem; font-weight: 600;">Mempool Surveillance & Subgraph MCP Monitor</h2>
+            <span style="font-size: 0.8rem; color: var(--color-cyan); font-family: var(--font-mono);">
+              The Graph: Uniswap v3/v4 Subgraph
+            </span>
+          </div>
+
+          <div class="radar-container" id="radar-box">
+            <div class="radar-sweep"></div>
+            <div id="radar-threat-dot" style="display: none; position: absolute; width: 14px; height: 14px; background: var(--color-crimson); border-radius: 50%; box-shadow: 0 0 15px var(--color-crimson); animation: pulse-ring 0.6s infinite; top: 35%; left: 65%;"></div>
+            <div style="z-index: 2; text-align: center;">
+              <div id="radar-status-label" style="font-family: var(--font-mono); font-size: 0.95rem; font-weight: 700; color: var(--color-cyan);">
+                RADAR ONLINE: Scanning Block 19,842,012
+              </div>
+              <div id="radar-sub-label" style="font-size: 0.8rem; color: var(--color-text-dim); margin-top: 4px;">
+                No predatory MEV volume spikes detected
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- In-Enclave Execution Terminal -->
+        <div class="terminal-window">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <div class="terminal-dot dot-red"></div>
+              <div class="terminal-dot dot-yellow"></div>
+              <div class="terminal-dot dot-green"></div>
+            </div>
+            <div>CHAINLINK CRE ENCLAVE EXECUTION LOGS</div>
+          </div>
+          <div class="terminal-body" id="sentinel-logs">
+            <div class="log-entry">
+              <span class="log-time">[Boot]</span>
+              <span class="log-info">Chainlink CRE runtime initialized. Handler registered via handlerInTee().</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">[Vault]</span>
+              <span class="log-info">Pushed secrets into TEE: LLM_API_KEY, ENCLAVE_SIGNER_KEY</span>
+            </div>
+            <div class="log-entry">
+              <span class="log-time">[Poll]</span>
+              <span class="log-info">CronCapability (15s): Fetched pool metrics from The Graph MCP. Volatility normal.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Right Column: Guardrails & Cryptographic Proof Receipt -->
+      <div>
+        
+        <!-- Hardware Guardrails Panel -->
+        <div class="glass-panel" style="margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.15rem; font-weight: 600; margin-bottom: 0.4rem;">
+            Hardware-Enforced Guardrails
+          </h2>
+          <p style="font-size: 0.82rem; color: var(--color-text-muted); margin-bottom: 1rem;">
+            Strict mathematical limits executed inside TEE memory to prevent autonomous LLM hallucinations.
+          </p>
+
+          <div class="guardrail-item">
+            <div>
+              <div style="font-weight: 600;">Max Slippage Bound</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-dim);">MAX_SLIPPAGE_BPS</div>
+            </div>
+            <div class="guardrail-status-pass">500 BPS ✓</div>
+          </div>
+
+          <div class="guardrail-item">
+            <div>
+              <div style="font-weight: 600;">Minimum Tick Width</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-dim);">MIN_TICK_WIDTH</div>
+            </div>
+            <div class="guardrail-status-pass">60 TICKS ✓</div>
+          </div>
+
+          <div class="guardrail-item">
+            <div>
+              <div style="font-weight: 600;">Maximum Dynamic Fee</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-dim);">MAX_FEE_BPS</div>
+            </div>
+            <div class="guardrail-status-pass">10000 BPS (10%) ✓</div>
+          </div>
+
+          <div class="guardrail-item">
+            <div>
+              <div style="font-weight: 600;">Replay Nonce Monotonicity</div>
+              <div style="font-size: 0.75rem; color: var(--color-text-dim);">NONCE_STRICT_POSITIVE</div>
+            </div>
+            <div class="guardrail-status-pass">ENFORCED ✓</div>
+          </div>
+        </div>
+
+        <!-- Signed Attestation Output Card -->
+        <div class="glass-panel">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
+            <h2 style="font-size: 1.15rem; font-weight: 600;">Enclave Attestation</h2>
+            <span class="status-badge badge-normal" id="attestation-badge">IDLE</span>
+          </div>
+
+          <div class="attestation-card" id="attestation-box">
+            <div class="attestation-field">
+              <span class="attestation-key">Action:</span>
+              <span class="attestation-val" id="attest-action">HOLD</span>
+            </div>
+            <div class="attestation-field">
+              <span class="attestation-key">Tick Range:</span>
+              <span class="attestation-val" id="attest-ticks">[-201200, -201200]</span>
+            </div>
+            <div class="attestation-field">
+              <span class="attestation-key">Fee Override:</span>
+              <span class="attestation-val" id="attest-fee">30 BPS</span>
+            </div>
+            <div class="attestation-field">
+              <span class="attestation-key">State Nonce:</span>
+              <span class="attestation-val" id="attest-nonce">1725578491024</span>
+            </div>
+            <div class="attestation-field" style="flex-direction: column; gap: 4px; margin-top: 8px;">
+              <span class="attestation-key">ECDSA Signature:</span>
+              <span class="attestation-val" style="font-size: 0.72rem; word-break: break-all;" id="attest-sig">
+                0xeb9e6bc944be7f8c7a8b3032f3409549f2b87c191a2e9b0c1d2e3f4a5b6c7d8e9f...
+              </span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+  <footer>
+    <div>AquaGhost Protocol &bull; ETHGlobal Online 2026 Submission</div>
+    <div class="footer-links">
+      <a href="vault.html">1inch Vault</a>
+      <a href="firewall.html">Uniswap Hook</a>
+      <a href="https://github.com/emarc99/ghost-protocol" target="_blank">GitHub</a>
+    </div>
+  </footer>
+
+  <script src="js/shared.js"></script>
+  <script src="js/sentinel.js"></script>
+</body>
+</html>
