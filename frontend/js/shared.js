@@ -212,3 +212,184 @@ function showToast(message, type = "info") {
     setTimeout(() => toast.remove(), 300);
   }, 4000);
 }
+
+// =========================================================================
+// Web3 Wallet & Live Anvil On-Chain Manager
+// =========================================================================
+
+class Web3WalletManager {
+  constructor() {
+    this.provider = null;
+    this.signer = null;
+    this.account = null;
+    this.chainId = null;
+    this.contracts = null;
+    this.loadContractsConfig();
+  }
+
+  async loadContractsConfig() {
+    try {
+      const res = await fetch("contracts.json");
+      if (res.ok) {
+        this.contracts = await res.json();
+        console.log("Loaded Anvil deployment config:", this.contracts);
+      }
+    } catch (e) {
+      console.warn("Could not load contracts.json, using defaults", e);
+    }
+  }
+
+  async init() {
+    const connectBtn = document.getElementById("btn-connect-wallet");
+    if (connectBtn) {
+      connectBtn.addEventListener("click", () => this.connect());
+    }
+
+    if (window.ethereum) {
+      // Auto-check if already authorized
+      try {
+        const accounts = await window.ethereum.request({ method: "eth_accounts" });
+        if (accounts.length > 0) {
+          await this.setupAccount(accounts[0]);
+        }
+      } catch (err) {
+        console.warn("Auto-connect check error:", err);
+      }
+
+      window.ethereum.on("accountsChanged", (accs) => {
+        if (accs.length > 0) {
+          this.setupAccount(accs[0]);
+        } else {
+          this.disconnect();
+        }
+      });
+
+      window.ethereum.on("chainChanged", () => {
+        window.location.reload();
+      });
+    }
+  }
+
+  async connect() {
+    if (!window.ethereum) {
+      showToast("MetaMask / Web3 browser extension not detected!", "alert");
+      soundFX.playRevertAlert();
+      return;
+    }
+
+    try {
+      soundFX.playClick();
+      const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+      if (accounts.length > 0) {
+        await this.ensureAnvilNetwork();
+        await this.setupAccount(accounts[0]);
+        showToast(`Wallet Connected: ${shortAddress(accounts[0])}`, "success");
+        soundFX.playEnclaveAttestation();
+      }
+    } catch (err) {
+      console.error("Wallet connection failed:", err);
+      showToast("Wallet connection rejected: " + err.message, "alert");
+      soundFX.playRevertAlert();
+    }
+  }
+
+  async ensureAnvilNetwork() {
+    const ANVIL_CHAIN_ID_HEX = "0x7a69"; // 31337
+    try {
+      await window.ethereum.request({
+        method: "wallet_switchEthereumChain",
+        params: [{ chainId: ANVIL_CHAIN_ID_HEX }]
+      });
+    } catch (switchError) {
+      // Chain not yet added to MetaMask
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId: ANVIL_CHAIN_ID_HEX,
+              chainName: "Anvil Localhost (AquaGhost)",
+              rpcUrls: ["http://127.0.0.1:8545"],
+              nativeCurrency: {
+                name: "Testnet Ether",
+                symbol: "ETH",
+                decimals: 18
+              }
+            }]
+          });
+        } catch (addError) {
+          console.error("Failed to add Anvil network:", addError);
+        }
+      }
+    }
+  }
+
+  async setupAccount(account) {
+    this.account = account;
+    if (window.ethers) {
+      this.provider = new window.ethers.BrowserProvider(window.ethereum);
+      this.signer = await this.provider.getSigner();
+      const net = await this.provider.getNetwork();
+      this.chainId = Number(net.chainId);
+    }
+
+    this.updateNavbar();
+    this.syncLiveBalances();
+  }
+
+  updateNavbar() {
+    const label = document.getElementById("wallet-btn-label");
+    if (label && this.account) {
+      label.textContent = shortAddress(this.account);
+    }
+    const networkStatus = document.getElementById("nav-network-status");
+    if (networkStatus) {
+      networkStatus.textContent = this.chainId === 31337 ? "ANVIL: 31337 (CONNECTED)" : "CHAIN: " + (this.chainId || "READY");
+    }
+  }
+
+  async syncLiveBalances() {
+    if (!this.contracts || !this.signer) return;
+    try {
+      const erc20Abi = [
+        "function balanceOf(address) view returns (uint256)",
+        "function decimals() view returns (uint8)"
+      ];
+      const weth = new window.ethers.Contract(this.contracts.contracts.WETH, erc20Abi, this.provider);
+      const usdc = new window.ethers.Contract(this.contracts.contracts.USDC, erc20Abi, this.provider);
+
+      const [wethBal, usdcBal] = await Promise.all([
+        weth.balanceOf(this.account),
+        usdc.balanceOf(this.account)
+      ]);
+
+      const formattedWeth = Number(window.ethers.formatEther(wethBal));
+      const formattedUsdc = Number(window.ethers.formatUnits(usdcBal, 18));
+
+      // Update state manager with real live balances
+      stateManager.update((s) => {
+        s.walletBalances.WETH = formattedWeth;
+        s.walletBalances.USDC = formattedUsdc;
+        s.makerAddress = this.account;
+      });
+
+      console.log(`Live On-Chain Balances Synced: ${formattedWeth} WETH, ${formattedUsdc} USDC`);
+    } catch (e) {
+      console.warn("Could not fetch live on-chain balances:", e);
+    }
+  }
+
+  disconnect() {
+    this.account = null;
+    this.signer = null;
+    const label = document.getElementById("wallet-btn-label");
+    if (label) label.textContent = "Connect Wallet";
+    showToast("Wallet disconnected", "info");
+  }
+}
+
+const walletManager = new Web3WalletManager();
+window.addEventListener("DOMContentLoaded", () => {
+  walletManager.init();
+});
+

@@ -35,11 +35,14 @@
       </a>
     </nav>
 
-    <div class="status-pills">
+    <div class="status-pills" style="display: flex; gap: 10px; align-items: center;">
       <div class="pulse-indicator" id="sentinel-status-pill">
         <span class="pulse-dot"></span>
         <span id="sentinel-status-text">TEE ENCLAVE: SECURE</span>
       </div>
+      <button id="btn-connect-wallet" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.85rem; border-radius: 20px;">
+        <span>🦊</span> <span id="wallet-btn-label">Connect Wallet</span>
+      </button>
     </div>
   </header>
 
@@ -239,6 +242,7 @@
     </div>
   </footer>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.2/ethers.umd.min.js"></script>
   <script src="js/shared.js"></script>
   <script src="js/sentinel.js"></script>
 </body>
