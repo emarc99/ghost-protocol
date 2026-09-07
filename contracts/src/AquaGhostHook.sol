@@ -115,4 +115,36 @@ contract AquaGhostHook is BaseHook {
         uint24 fee = dynamicFeeBps;
         return (BaseHook.beforeSwap.selector, BeforeSwapDeltaLibrary.ZERO_DELTA, fee);
     }
+
+    // =========================================================================
+    // On-Chain Hook Metadata Introspection
+    // =========================================================================
+
+    /**
+     * @notice Exposes canonical schema for expected hookData to Uniswap v4 routers and HookList visualizers.
+     */
+    function expectedHookDataSchema() external pure returns (string memory) {
+        return "tuple(bytes32 attestationHash, bytes signature, uint256 nonce)";
+    }
+
+    /**
+     * @notice Dynamic metadata introspection for aggregators, indexers, and autonomous sentinels.
+     */
+    function getHookMetadata() external view returns (
+        string memory name,
+        string memory version,
+        address enclaveSigner,
+        bool isDefenseActive,
+        uint24 currentFeeBps,
+        string memory hookType
+    ) {
+        return (
+            "AquaGhost Anti-Sniper Firewall Hook",
+            "1.0.0",
+            trustedEnclaveSigner,
+            defenseModeActive,
+            dynamicFeeBps,
+            "CRE_NITRO_TEE_FIREWALL"
+        );
+    }
 }

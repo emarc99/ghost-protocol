@@ -383,6 +383,29 @@ contract AquaGhostTest is Test {
         assertFalse(perms.afterInitialize);
     }
 
+    function test_Hook_ExpectedHookDataSchema() public view {
+        string memory schema = aquaGhostHook.expectedHookDataSchema();
+        assertEq(schema, "tuple(bytes32 attestationHash, bytes signature, uint256 nonce)");
+    }
+
+    function test_Hook_GetHookMetadata() public view {
+        (
+            string memory name,
+            string memory version,
+            address signer,
+            bool isDefenseActive,
+            uint24 currentFeeBps,
+            string memory hookType
+        ) = aquaGhostHook.getHookMetadata();
+
+        assertEq(name, "AquaGhost Anti-Sniper Firewall Hook");
+        assertEq(version, "1.0.0");
+        assertEq(signer, enclaveSigner);
+        assertFalse(isDefenseActive);
+        assertEq(currentFeeBps, 0);
+        assertEq(hookType, "CRE_NITRO_TEE_FIREWALL");
+    }
+
     function test_Hook_SetDefenseMode_ValidSignature() public {
         bool active = true;
         uint24 newFeeBps = 150; // 1.5%
