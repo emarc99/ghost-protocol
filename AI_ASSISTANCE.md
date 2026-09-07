@@ -116,6 +116,9 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `d414200` | `feat(aqua)` | Implement AquaSwapVM with OP_TEE_GUARD and OP_DYNAMIC_FEE opcodes and unit tests |
 | `a800f2f` | `feat(sim)` | Model Tanner's 1inch Aqua multi-strategy shared balance depletion scenario in simulate_jit_attack.ts |
 | `64ead2a` | `feat(uniswap)` | Add on-chain hook metadata introspection to AquaGhostHook with tests |
+| `de5ad7d` | `docs(ai)` | Update AI_ASSISTANCE.md with live Graph gateway proofs and 4 transcript architectures |
+| `71642d7` | `chore` | Refine gitignore anchors for env example templates |
+| `df46728` | `feat(cre)` | Add dual HTTP and Cron triggers to confidential sentinel workflow |
 
 ---
 
@@ -150,6 +153,11 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
    - **Multi-Strategy Depletion Simulation:** Expanded `simulate_jit_attack.ts` to model Tanner's exact $4,000 multi-strategy LP allocation across AMM, Flash Loans, and Limit Orders.
    - **On-Chain Hook Metadata Introspection:** Exposed `expectedHookDataSchema()` and `getHookMetadata()` in `AquaGhostHook.sol` for Uniswap v4 routers and indexers.
    - **Total Verified Tests:** Expanded suite to 32/32 passing tests (including 4 fuzz tests across 256 runs).
+8. **Dual HTTP POST & Scheduled Cron In-Enclave Triggers:** Expanded `cre-workflow/src/workflow.ts` to register both `CronCapability` (for autonomous 1-minute background surveillance) and `HTTPCapability` (for instantaneous on-demand evaluations) inside AWS Nitro TEE enclaves:
+   - Extracted shared evaluation pipeline into `evaluateDefenseInsideEnclave` running strictly inside the enclave boundary.
+   - Added robust UTF-8 payload parsing for inbound HTTP POST requests (`HttpTriggerInput` supporting dynamic `poolTarget`, `riskThresholdBps`, `maxSlippageBps`, and `forceDefensive` flags).
+   - Validated both handlers via CRE CLI simulation (`--trigger-index 0` for Cron and `--trigger-index 1` with `--http-payload` for HTTP), verifying ECDSA attestation signing and DON consensus report generation.
+   - Wired an interactive "On-Demand HTTP Trigger" button and copyable cURL documentation directly into the dashboard UI (`frontend/sentinel.html`, `frontend/js/sentinel.js`) for hackathon judges and mempool bots.
 
 ---
 
