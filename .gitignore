@@ -12,14 +12,15 @@ contracts/cache/
 contracts/out/
 contracts/broadcast/
 broadcast/
+contracts/lib/**/.env.example
 
 # Node
 node_modules/
 dist/
 .env
 .env.*
-!.env.example
-!**/.env.example
+!/.env.example
+!/graph-mcp/.env.example
 
 # OS
 .DS_Store
