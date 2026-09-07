@@ -163,7 +163,13 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
    - **Directional `previewFee` Method:** Implemented `previewFee(PoolKey calldata key)` returning structured `FeeBreakdown` (`baseFee`, `defenseFee`, `effectiveFee`, `isDefenseActive`, `mode`), allowing external routers to inspect whether defense mode is active (`"DEFENSE_ACTIVE"` vs `"CALM"`) prior to initiating transactions.
    - **Structured `DefenseAssessment` Event:** Emitted comprehensive audit records upon defense mode changes (`nonce`, `blockNumber`, `timestamp`, `defenseEngagementCount`, and caller), streamlining subgraphs and AI sentinel indexing.
    - **`DefenseTelemetry` Snapshot:** Exposed `getDefenseTelemetry()` for continuous off-chain health checks.
-   - **Full Test Suite Expansion:** Extended Foundry test coverage to 34/34 passing tests, verifying calm state, defense mode activation, and calm state restoration.
+10. **Zero-Mock Subgraph Enforcement & CRE In-Enclave HTTPClient Migration:**
+    - **Zero Mock / Fallback Discipline:** Completely removed all hardcoded deterministic fallback snapshots (`getPoolSnapshot`, `getTickLiquidity`, `analyzeJitThreat`, and `EnclaveGraphFetcher`), ensuring the protocol strictly complies with The Graph's hackathon qualification standard: *"Consume live data from a Graph provider... Mocked, local-only, or static datasets do not qualify."*
+    - **In-Enclave CRE HTTPClient Architecture:** Replaced global `fetch` (which does not exist in QuickJS WASM sandboxes) with `@chainlink/cre-sdk`'s `cre.capabilities.HTTPClient` accepting `TeeRuntime`. This enables the workflow to dispatch authenticated Subgraph queries directly from inside the AWS Nitro TEE enclave while preserving confidential execution boundaries.
+    - **Dual Live Simulation Verification:** Verified both Scheduled Cron (`--trigger-index 0`) and On-Demand HTTP (`--trigger-index 1`) triggers via `cre workflow simulate`, successfully querying live Ethereum Mainnet USDC/WETH pool state ($414M TVL, Tick 198127), signing ECDSA attestations inside the TEE, and achieving Workflow DON consensus with zero mocks.
+    - **Adoption of Subgraphs-Skills PR #1 Learnings:**
+      - Integrated an explicit **"When to Use This Tool" Decision Matrix** into [`graph-mcp/README.md`](./graph-mcp/README.md) to guide autonomous AI agents between snapshot metrics, depth distribution, and JIT sandwich evaluation.
+      - Authored [`graph-mcp/references/subgraph-mev-patterns.md`](./graph-mcp/references/subgraph-mev-patterns.md) detailing deep production edge cases: sparse initialized tick interpolation, virtual liquidity ($L$) scaling arithmetic, `_meta` indexing lag vs HTTP 200 OK disambiguation, directional single-sided JIT snipes, and gateway exponential backoff.
 
 ---
 
