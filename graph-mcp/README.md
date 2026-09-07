@@ -37,7 +37,23 @@ Instead of writing bespoke, hard-coded GraphQL queries, AI agents (Claude, Curso
 
 ---
 
-## 2. Tools Exposed by the MCP Server
+## 2. When to Use This Tool: Decision Matrix
+
+Autonomous agents should use this decision matrix to route intents to the optimal Subgraph MCP tool:
+
+| Agent Intent / Trigger Condition | Recommended Tool | Execution Detail | When NOT to Use |
+| :--- | :--- | :--- | :--- |
+| *"What is the current price/tick/TVL of the target pool?"* | `graph_get_pool_snapshot` | Fast O(1) single-entity fetch querying `tick`, `liquidity`, `totalValueLockedUSD`, and `volumeUSD24h`. | Do NOT use for order book depth or inspecting liquidity bins across wide intervals. |
+| *"How is concentrated liquidity distributed around the active price?"* | `graph_get_tick_liquidity` | Traverses initialized tick entities ordered by `tickIdx` with `liquidityGross` and `liquidityNet`. | Do NOT use if you only need the active tick or high-level TVL (use snapshot). |
+| *"A mempool flash-loan surge just appeared. Is this a JIT sandwich attack?"* | `graph_detect_jit_threat` | Evaluates mempool surge ratio against active Subgraph depth; calculates JIT sandwich threat and synthesizes safe tick bounds & dynamic fee. | Do NOT use for retroactive post-mortem or historical trade accounting. |
+| *"Execute autonomous end-to-end risk evaluation and defense attestation."* | Prompt: `jit-defense-analysis` | System prompt orchestrating snapshot query, threat assessment, corridor calculation, and enclave attestation synthesis. | Do NOT use for programmatic single-metric data extraction. |
+
+For deep architectural patterns and real-world edge cases (tick spacing interpolation, virtual liquidity scaling, indexing lag disambiguation, and directional JIT sniping), see:  
+👉 [`references/subgraph-mev-patterns.md`](./references/subgraph-mev-patterns.md)
+
+---
+
+## 3. Tools Exposed by the MCP Server
 
 ### 1. `graph_get_pool_snapshot`
 Fetches real-time market metrics for a target liquidity pool.
@@ -62,7 +78,7 @@ Compares incoming mempool flash-loan liquidity surges against active Subgraph de
 
 ---
 
-## 3. Running & Testing
+## 4. Running & Testing
 
 ### Run Standalone Tool Verification
 ```bash
@@ -80,7 +96,7 @@ npm start
 
 ---
 
-## 4. Connecting to AI Assistants
+## 5. Connecting to AI Assistants
 
 ### Claude Desktop / Cursor (`mcpServers` configuration)
 Add the following to your `claude_desktop_config.json` or Cursor MCP settings:
@@ -104,7 +120,7 @@ Add the following to your `claude_desktop_config.json` or Cursor MCP settings:
 
 ---
 
-## 5. Upstream Feedback
+## 6. Upstream Feedback
 
 During development of this MCP server, we submitted two comprehensive upstream developer experience improvements in:
 [`docs/sponsor-issues/THE_GRAPH_MCP_FEEDBACK.md`](../docs/sponsor-issues/THE_GRAPH_MCP_FEEDBACK.md)
