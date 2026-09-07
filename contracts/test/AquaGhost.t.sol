@@ -516,6 +516,50 @@ contract AquaGhostTest is Test {
         assertEq(BeforeSwapDelta.unwrap(delta), BeforeSwapDelta.unwrap(BeforeSwapDeltaLibrary.ZERO_DELTA));
     }
 
+    function test_Hook_PreviewFee_Calm() public view {
+        AquaGhostHook.FeeBreakdown memory preview = aquaGhostHook.previewFee(testPoolKey);
+        assertEq(preview.baseFee, 3000);
+        assertEq(preview.defenseFee, 0);
+        assertEq(preview.effectiveFee, 3000);
+        assertFalse(preview.isDefenseActive);
+        assertEq(preview.mode, "CALM");
+    }
+
+    function test_Hook_PreviewFee_DefenseActive() public {
+        uint256 nonce = 777;
+        uint24 targetFee = 250;
+        bytes32 rawHash = keccak256(abi.encodePacked("TOGGLE_DEFENSE", true, targetFee, nonce));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, rawHash.toEthSignedMessageHash());
+        aquaGhostHook.setDefenseMode(true, targetFee, nonce, abi.encodePacked(r, s, v));
+
+        AquaGhostHook.FeeBreakdown memory preview = aquaGhostHook.previewFee(testPoolKey);
+        assertEq(preview.baseFee, 3000);
+        assertEq(preview.defenseFee, targetFee);
+        assertEq(preview.effectiveFee, targetFee);
+        assertTrue(preview.isDefenseActive);
+        assertEq(preview.mode, "DEFENSE_ACTIVE");
+
+        AquaGhostHook.DefenseTelemetry memory telemetry = aquaGhostHook.getDefenseTelemetry();
+        assertTrue(telemetry.active);
+        assertEq(telemetry.dynamicFeeBps, targetFee);
+        assertEq(telemetry.lastNonce, nonce);
+        assertEq(telemetry.defenseEngagementCount, 1);
+        assertEq(telemetry.enclaveSigner, enclaveSigner);
+
+        // Disengage defense and verify return to CALM with defenseFee 0
+        uint256 nonce2 = 778;
+        bytes32 rawHash2 = keccak256(abi.encodePacked("TOGGLE_DEFENSE", false, targetFee, nonce2));
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(enclavePrivateKey, rawHash2.toEthSignedMessageHash());
+        aquaGhostHook.setDefenseMode(false, targetFee, nonce2, abi.encodePacked(r2, s2, v2));
+
+        AquaGhostHook.FeeBreakdown memory calmPreview = aquaGhostHook.previewFee(testPoolKey);
+        assertEq(calmPreview.baseFee, 3000);
+        assertEq(calmPreview.defenseFee, 0);
+        assertEq(calmPreview.effectiveFee, 3000);
+        assertFalse(calmPreview.isDefenseActive);
+        assertEq(calmPreview.mode, "CALM");
+    }
+
     // =========================================================================
     // FUZZ TESTS
     // =========================================================================

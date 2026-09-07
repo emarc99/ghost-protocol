@@ -25,6 +25,10 @@ contract AquaGhostHook is BaseHook {
     address public immutable trustedEnclaveSigner;
     bool public defenseModeActive;
     uint24 public dynamicFeeBps;
+    uint256 public lastDefenseBlock;
+    uint256 public lastDefenseTimestamp;
+    uint256 public lastNonce;
+    uint256 public defenseEngagementCount;
     mapping(uint256 => bool) public executedNonces;
 
     error SniperAttackBlocked(address sender, PoolId poolId);
@@ -32,7 +36,39 @@ contract AquaGhostHook is BaseHook {
     error NonceAlreadyUsed();
     error InvalidFeeBps();
 
+    /// @notice Backward-compatible toggle event
     event DefenseModeToggled(bool indexed active, uint24 dynamicFeeBps, uint256 indexed nonce, address caller);
+
+    /// @notice Structured explainable defense telemetry event (FairFlow pattern for indexers & UI)
+    event DefenseAssessment(
+        bool indexed active,
+        uint24 dynamicFeeBps,
+        uint256 indexed nonce,
+        uint256 blockNumber,
+        uint256 timestamp,
+        uint256 indexed engagementCount,
+        address caller
+    );
+
+    /// @notice Explainable fee breakdown struct for routers, aggregators, and UI dashboards
+    struct FeeBreakdown {
+        uint24 baseFee;
+        uint24 defenseFee;
+        uint24 effectiveFee;
+        bool isDefenseActive;
+        string mode;
+    }
+
+    /// @notice Full state telemetry snapshot for autonomous monitoring sentinels and indexers
+    struct DefenseTelemetry {
+        bool active;
+        uint24 dynamicFeeBps;
+        uint256 lastDefenseBlock;
+        uint256 lastDefenseTimestamp;
+        uint256 lastNonce;
+        uint256 defenseEngagementCount;
+        address enclaveSigner;
+    }
 
     constructor(IPoolManager _poolManager, address _enclaveSigner) BaseHook(_poolManager) {
         require(_enclaveSigner != address(0), "Zero address signer");
@@ -84,8 +120,55 @@ contract AquaGhostHook is BaseHook {
 
         defenseModeActive = active;
         dynamicFeeBps = newFeeBps;
+        lastDefenseBlock = block.number;
+        lastDefenseTimestamp = block.timestamp;
+        lastNonce = nonce;
+        if (active) {
+            defenseEngagementCount++;
+        }
 
         emit DefenseModeToggled(active, newFeeBps, nonce, msg.sender);
+        emit DefenseAssessment(
+            active,
+            newFeeBps,
+            nonce,
+            block.number,
+            block.timestamp,
+            defenseEngagementCount,
+            msg.sender
+        );
+    }
+
+    /**
+     * @notice Router- and UI-friendly directional fee preview (FairFlow explainability pattern).
+     * @param key The Uniswap v4 PoolKey
+     * @return breakdown Structured breakdown of base fee, defense override, and current mode
+     */
+    function previewFee(PoolKey calldata key) external view returns (FeeBreakdown memory breakdown) {
+        uint24 base = uint24(key.fee);
+        uint24 effective = defenseModeActive ? dynamicFeeBps : base;
+        return FeeBreakdown({
+            baseFee: base,
+            defenseFee: defenseModeActive ? dynamicFeeBps : 0,
+            effectiveFee: effective,
+            isDefenseActive: defenseModeActive,
+            mode: defenseModeActive ? "DEFENSE_ACTIVE" : "CALM"
+        });
+    }
+
+    /**
+     * @notice Returns comprehensive defense telemetry snapshot for indexers and AI sentinels.
+     */
+    function getDefenseTelemetry() external view returns (DefenseTelemetry memory) {
+        return DefenseTelemetry({
+            active: defenseModeActive,
+            dynamicFeeBps: dynamicFeeBps,
+            lastDefenseBlock: lastDefenseBlock,
+            lastDefenseTimestamp: lastDefenseTimestamp,
+            lastNonce: lastNonce,
+            defenseEngagementCount: defenseEngagementCount,
+            enclaveSigner: trustedEnclaveSigner
+        });
     }
 
     /**
