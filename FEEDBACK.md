@@ -2,7 +2,7 @@
 
 > **Submission for ETHGlobal Online 2026 — Uniswap Foundation Bounty**  
 > **Project:** AquaGhost Protocol  
-> **Hook Implementation:** [`contracts/src/AquaGhostHook.sol`](file:///contracts/src/AquaGhostHook.sol)  
+> **Hook Implementation:** [`contracts/src/AquaGhostHook.sol`](contracts/src/AquaGhostHook.sol)  
 > **Repository:** [github.com/emarc99/ghost-protocol](https://github.com/emarc99/ghost-protocol)
 
 ---
