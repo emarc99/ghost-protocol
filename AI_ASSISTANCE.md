@@ -119,6 +119,7 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `de5ad7d` | `docs(ai)` | Update AI_ASSISTANCE.md with live Graph gateway proofs and 4 transcript architectures |
 | `71642d7` | `chore` | Refine gitignore anchors for env example templates |
 | `df46728` | `feat(cre)` | Add dual HTTP and Cron triggers to confidential sentinel workflow |
+| `7f2cbec` | `feat(uniswap)` | Adopt FairFlow structured telemetry, previewFee, and defense assessment events |
 
 ---
 
@@ -158,6 +159,11 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
    - Added robust UTF-8 payload parsing for inbound HTTP POST requests (`HttpTriggerInput` supporting dynamic `poolTarget`, `riskThresholdBps`, `maxSlippageBps`, and `forceDefensive` flags).
    - Validated both handlers via CRE CLI simulation (`--trigger-index 0` for Cron and `--trigger-index 1` with `--http-payload` for HTTP), verifying ECDSA attestation signing and DON consensus report generation.
    - Wired an interactive "On-Demand HTTP Trigger" button and copyable cURL documentation directly into the dashboard UI (`frontend/sentinel.html`, `frontend/js/sentinel.js`) for hackathon judges and mempool bots.
+9. **Adoption of FairFlow-Style Explainable Telemetry & Structured Defense Events:** Drawing from the human architect's prior Uniswap Hook Incubator work (FairFlow), upgraded `AquaGhostHook.sol` to provide transparent, explainable fee telemetry for frontends and aggregators:
+   - **Directional `previewFee` Method:** Implemented `previewFee(PoolKey calldata key)` returning structured `FeeBreakdown` (`baseFee`, `defenseFee`, `effectiveFee`, `isDefenseActive`, `mode`), allowing external routers to inspect whether defense mode is active (`"DEFENSE_ACTIVE"` vs `"CALM"`) prior to initiating transactions.
+   - **Structured `DefenseAssessment` Event:** Emitted comprehensive audit records upon defense mode changes (`nonce`, `blockNumber`, `timestamp`, `defenseEngagementCount`, and caller), streamlining subgraphs and AI sentinel indexing.
+   - **`DefenseTelemetry` Snapshot:** Exposed `getDefenseTelemetry()` for continuous off-chain health checks.
+   - **Full Test Suite Expansion:** Extended Foundry test coverage to 34/34 passing tests, verifying calm state, defense mode activation, and calm state restoration.
 
 ---
 
