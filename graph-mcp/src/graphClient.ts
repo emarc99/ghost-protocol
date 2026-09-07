@@ -5,9 +5,9 @@ export class TheGraphClient {
   private apiKey: string;
 
   constructor(endpoint: string = "", apiKey: string = "") {
-    // Default to The Graph Network Gateway Uniswap v3 Subgraph or public decentralized endpoint
-    this.endpoint = endpoint || "https://gateway.thegraph.com/api/public/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV";
-    this.apiKey = apiKey;
+    // Default to environment settings or The Graph Network Gateway Uniswap v3 Subgraph
+    this.endpoint = endpoint || process.env.GRAPH_GATEWAY_URL || "https://gateway.thegraph.com/api/public/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV";
+    this.apiKey = apiKey || process.env.GRAPH_API_KEY || "";
   }
 
   /**
