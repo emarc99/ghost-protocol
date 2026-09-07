@@ -10,7 +10,7 @@ import { encodeAbiParameters, parseAbiParameters, keccak256, encodePacked } from
 import { privateKeyToAccount } from "viem/accounts";
 import { z } from "zod";
 import { validateGuardrails, DefenseDecision } from "./guardrails.js";
-import { PoolMetrics, GraphMCPClient } from "./graphClient.js";
+import { PoolMetrics, EnclaveGraphFetcher } from "./graphClient.js";
 
 // ─── 1. Zod Configuration Schema (Official CRE Standard) ───────
 export const configSchema = z.object({
@@ -64,11 +64,11 @@ export async function evaluateDefenseInsideEnclave(
     runtime.log("Running in development mode with local key fallback.");
   }
 
-  // Step 2: Confidential Data Ingestion via Graph Subgraph MCP Client
-  const graphClient = new GraphMCPClient(config.subgraphUrl);
+  // Step 2: Confidential In-Enclave Data Ingestion via Graph Subgraph Fetcher
+  const graphFetcher = new EnclaveGraphFetcher(config.subgraphUrl);
   let poolMetrics: PoolMetrics;
   try {
-    poolMetrics = await graphClient.fetchPoolMetrics(poolTarget);
+    poolMetrics = await graphFetcher.fetchPoolMetrics(poolTarget);
   } catch (e) {
     // Deterministic fallback metrics for offline simulation
     poolMetrics = {

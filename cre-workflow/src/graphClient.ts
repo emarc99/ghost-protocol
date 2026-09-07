@@ -1,7 +1,7 @@
 /**
- * The Graph Subgraph MCP Client for AquaGhost Protocol.
- * Integrates with The Graph Network & Subgraph MCP to fetch multi-pool depth,
- * tick liquidity distributions, and anomalous volume volatility.
+ * In-Enclave Graph Subgraph Fetcher for AquaGhost CRE Sentinel.
+ * Lightweight, zero-dependency GraphQL fetcher compiled into WASM for AWS Nitro Enclaves.
+ * (Note: The standalone Model Context Protocol server for AI IDEs resides in @aquaghost/graph-mcp).
  */
 
 export interface PoolMetrics {
@@ -13,7 +13,7 @@ export interface PoolMetrics {
   volumeUSD24h: string;
 }
 
-export class GraphMCPClient {
+export class EnclaveGraphFetcher {
   private endpoint: string;
   private apiKey: string;
 
