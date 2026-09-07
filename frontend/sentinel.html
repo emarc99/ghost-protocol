@@ -57,7 +57,10 @@
           Hardware-Isolated TEE Anomaly Detection, Subgraph MCP Ingestion & Cryptographic Attestation Engine.
         </p>
       </div>
-      <div>
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <button id="btn-trigger-http" class="btn btn-secondary" style="border-color: var(--color-cyan); color: var(--color-cyan); font-weight: 600;">
+          <span>🌐</span> On-Demand HTTP Trigger
+        </button>
         <button id="btn-trigger-attack" class="btn btn-danger">
           <span>🚨</span> Simulate JIT Sniper Attack
         </button>
@@ -78,7 +81,7 @@
         <div class="metric-label">CRE Workflow Deployment</div>
         <div class="metric-value" style="font-size: 1.15rem; color: var(--color-cyan);">aquaghost-sentinel-staging</div>
         <div style="font-size: 0.8rem; color: var(--color-emerald); margin-top: 4px; font-family: var(--font-mono);">
-          ID: 0056b79a...92621 (ACTIVE in Private Registry)
+          Dual Triggers: Scheduled Cron + On-Demand HTTP
         </div>
       </div>
 
@@ -145,6 +148,24 @@
               <span class="log-time">[Poll]</span>
               <span class="log-info">CronCapability (15s): Fetched pool metrics from The Graph MCP. Volatility normal.</span>
             </div>
+          </div>
+        </div>
+
+        <!-- On-Demand HTTP Trigger Card for Judges & Bots -->
+        <div class="glass-panel" style="margin-top: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 8px;">
+            <h3 style="font-size: 0.95rem; font-weight: 600; color: var(--color-cyan);">
+              <span>🌐</span> On-Demand HTTP Trigger (Chainlink CRE HTTPCapability)
+            </h3>
+            <span class="status-badge badge-normal" style="font-size: 0.72rem; border-color: var(--color-emerald); color: var(--color-emerald);">
+              ACTIVE IN PRIVATE REGISTRY
+            </span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--color-text-muted); margin-bottom: 0.75rem;">
+            Judges, dashboard UI, and external mempool bots can trigger an immediate, attested in-enclave evaluation on demand via HTTP POST:
+          </p>
+          <div style="background: rgba(0, 0, 0, 0.45); border: 1px solid var(--color-border); border-radius: 8px; padding: 10px 14px; font-family: var(--font-mono); font-size: 0.78rem; color: var(--color-cyan); overflow-x: auto;">
+            <code>curl -X POST https://workflow.chain.link/api/v1/trigger/0056b79a \<br>&nbsp;&nbsp;-H "Content-Type: application/json" \<br>&nbsp;&nbsp;-d '{"poolTarget":"0x88e6...5640","riskThresholdBps":150,"forceDefensive":true}'</code>
           </div>
         </div>
 

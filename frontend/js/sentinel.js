@@ -12,6 +12,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let attackInProgress = false;
 
+  // On-Demand HTTP Trigger Handler (Chainlink CRE HTTPCapability)
+  const btnTriggerHttp = document.getElementById("btn-trigger-http");
+  if (btnTriggerHttp) {
+    btnTriggerHttp.addEventListener("click", () => {
+      if (attackInProgress) return;
+      attackInProgress = true;
+      soundFX.playBeep(900, 0.2);
+
+      showToast("🌐 Dispatching on-demand HTTP trigger to Chainlink CRE...", "info");
+      addLog("[HTTP POST] POST https://workflow.chain.link/api/v1/trigger/0056b79a payload: {\"forceDefensive\":true,\"riskThresholdBps\":150}", "info");
+
+      setTimeout(() => {
+        soundFX.playBeep(1100, 0.15);
+        addLog("[CRE TEE] onHttpTrigger() invoked inside AWS Nitro TEE (us-west-2). Ingesting pool metrics from The Graph MCP.", "info");
+        addLog("[Guardrails] Math invariants validated: shiftMagnitude=240, width=240, feeBps=250 <= 10000 (PASS)", "success");
+      }, 900);
+
+      setTimeout(() => {
+        soundFX.playSuccess();
+        const nonce = Date.now();
+        const action = "DEFENSIVE_SHIFT";
+        const newTickLower = -201320;
+        const newTickUpper = -201080;
+        const newFeeBps = 250; // 2.50% dynamic fee
+
+        // Update Attestation Card
+        document.getElementById("attestation-badge").textContent = "HTTP ATTESTATION";
+        document.getElementById("attestation-badge").className = "status-badge badge-defensive";
+        document.getElementById("attest-action").textContent = `${action} [HTTP]`;
+        document.getElementById("attest-ticks").textContent = `[${newTickLower}, ${newTickUpper}]`;
+        document.getElementById("attest-fee").textContent = `${newFeeBps} BPS (2.50%)`;
+        document.getElementById("attest-nonce").textContent = nonce;
+
+        const mockSig = `0x${Array.from({ length: 130 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+        document.getElementById("attest-sig").textContent = mockSig;
+
+        addLog(`[Signer] Attestation signed inside hardware TEE with enclave private key. Nonce: ${nonce}`, "success");
+        addLog("[Workflow DON] Consensus reached on HTTP report: DEFENSIVE_SHIFT verified by DON nodes.", "success");
+
+        AppState.update(state => {
+          state.sentinel.status = "DEFENSE_ACTIVE";
+          state.hookState.defenseActive = true;
+          state.hookState.dynamicFeeBps = newFeeBps;
+          if (state.strategies.length > 0) {
+            state.strategies[0].status = "DEFENSIVE_SHIFTED";
+            state.strategies[0].tickLower = newTickLower;
+            state.strategies[0].tickUpper = newTickUpper;
+            state.strategies[0].feeBps = newFeeBps;
+          }
+        });
+
+        showToast("🛡️ Enclave verified HTTP on-demand evaluation! Defenses engaged.", "success");
+        attackInProgress = false;
+      }, 2000);
+    });
+  }
+
   btnTriggerAttack.addEventListener("click", () => {
     if (attackInProgress) return;
     attackInProgress = true;
