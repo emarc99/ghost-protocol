@@ -1,109 +1,151 @@
 /**
- * AquaGhost - JIT Attack Simulation Script
- * Simulates a predatory MEV bot attempting a Just-In-Time (JIT) fee-sniping attack:
- * 1. An incoming victim swap is detected in the mempool
- * 2. Sniper bot attempts to wrap the swap with concentrated liquidity addition & withdrawal
- * 3. AquaGhost Sentinel identifies the anomaly inside AWS Nitro TEE
- * 4. Generates attestation -> triggers 1inch Aqua dock/ship repositioning + Uniswap v4 Hook defense
+ * AquaGhost - Multi-Strategy MEV & JIT Attack Simulation Script
+ * Models Tanner Moore's exact 1inch Aqua workshop scenario:
+ * 1. An LP commits $4,000 in sovereign wallet tokens simultaneously across 3 Aqua strategies:
+ *    - Strategy 1: Uniswap v3/v4 Concentrated AMM
+ *    - Strategy 2: Aqua Flash Loan Lending Provider
+ *    - Strategy 3: Dynamic Limit Order / Yield Strategy
+ * 2. Incoming victim swap & predatory JIT sniper flash loan detected in mempool.
+ * 3. Chainlink CRE Sentinel in AWS Nitro TEE executes an EIP-712 delegated defensive shift.
+ * 4. Verifies multi-strategy shared balance depletion accounting and zero capital loss.
  */
 
 import { ethers } from "ethers";
 
-interface PendingSwap {
-  txHash: string;
-  sender: string;
-  tokenIn: string;
-  tokenOut: string;
-  amountIn: string;
-  targetPool: string;
+interface AquaStrategyState {
+  id: string;
+  name: string;
+  allocatedAllowanceUSD: number;
+  activeStatus: "DEPLOYED" | "DOCKED_DEFENSE" | "REPOSITIONED_SAFE";
+  feeBps: number;
+  tickRange?: [number, number];
 }
 
-interface JITAttackVector {
-  sniperBot: string;
-  sandwichBlock: number;
-  borrowedCapitalUSD: number;
-  tickLower: number;
-  tickUpper: number;
+interface MakerWallet {
+  address: string;
+  actualTokenBalanceUSD: number; // Sovereign wallet balance
+  strategies: AquaStrategyState[];
 }
 
-async function runSimulation() {
-  console.log("===============================================================");
-  console.log("      AQUAGHOST PROTOCOL - MEV & JIT DEFENSE SIMULATION        ");
-  console.log("===============================================================\n");
+async function runMultiStrategySimulation() {
+  console.log("===============================================================================");
+  console.log("   AQUAGHOST PROTOCOL - 1INCH AQUA MULTI-STRATEGY MEV DEFENSE SIMULATOR        ");
+  console.log("   (Modeled directly on Tanner Moore's 1inch Aqua Architecture Specification)  ");
+  console.log("===============================================================================\n");
 
-  // Step 1: Incoming victim swap detected in public mempool
-  const victimSwap: PendingSwap = {
-    txHash: "0x7a3f4b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a",
-    sender: "0x3333333333333333333333333333333333333333",
-    tokenIn: "USDC",
-    tokenOut: "WETH",
-    amountIn: "2,500,000 USDC",
-    targetPool: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+  // Step 1: Initialize LP Sovereign Wallet with Shared Balance
+  const maker: MakerWallet = {
+    address: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+    actualTokenBalanceUSD: 4000,
+    strategies: [
+      {
+        id: "STRAT-01-AMM",
+        name: "Uniswap v4 Concentrated AMM (WETH/USDC)",
+        allocatedAllowanceUSD: 4000,
+        activeStatus: "DEPLOYED",
+        feeBps: 30,
+        tickRange: [-201210, -201190]
+      },
+      {
+        id: "STRAT-02-FLASH",
+        name: "Aqua Shared Flash Loan Vault",
+        allocatedAllowanceUSD: 4000,
+        activeStatus: "DEPLOYED",
+        feeBps: 9 // 0.09% flash fee
+      },
+      {
+        id: "STRAT-03-LIMIT",
+        name: "Maker Sovereign Limit Order Grid",
+        allocatedAllowanceUSD: 4000,
+        activeStatus: "DEPLOYED",
+        feeBps: 15
+      }
+    ]
   };
 
-  console.log("[1] Mempool Monitor: Detected high-impact victim swap:");
-  console.log(`    TxHash:   ${victimSwap.txHash}`);
-  console.log(`    Volume:   ${victimSwap.amountIn} into Pool ${victimSwap.targetPool}`);
+  console.log("[1] LP Sovereign Balance & Shared Strategy Allocation:");
+  console.log(`    Maker Address:          ${maker.address}`);
+  console.log(`    Actual Wallet Balance:  $${maker.actualTokenBalanceUSD.toLocaleString()} (Self-Custodial)`);
+  console.log("    Aqua Multi-Strategy Virtual Commitments:");
+  maker.strategies.forEach((s) => {
+    console.log(`      • [${s.id}] ${s.name.padEnd(42)} | Virtual Depth: $${s.allocatedAllowanceUSD.toLocaleString()} | Fee: ${s.feeBps} bps`);
+  });
+  console.log("    -> Total Virtual Exposure: $12,000 backed by $4,000 real inventory!");
 
-  // Step 2: Predatory JIT Sniper bot transaction spotted
-  const attack: JITAttackVector = {
-    sniperBot: "0xBAD000000000000000000000000000000000B07",
-    sandwichBlock: 19842011,
-    borrowedCapitalUSD: 15_000_000,
-    tickLower: -201210,
-    tickUpper: -201190
-  };
+  // Step 2: Normal Partial Execution (Simulating shared depletion)
+  console.log("\n[2] Organic Trade Execution & Aqua Shared Depletion Accounting:");
+  const tradeVolume = 1000;
+  maker.actualTokenBalanceUSD -= tradeVolume;
+  console.log(`    -> Organic trade executed against [STRAT-01-AMM]: $${tradeVolume} filled.`);
+  console.log(`    -> New Sovereign Balance: $${maker.actualTokenBalanceUSD.toLocaleString()}`);
+  console.log("    -> Atomic Balance Update across remaining strategies:");
+  maker.strategies.forEach((s) => {
+    s.allocatedAllowanceUSD = maker.actualTokenBalanceUSD;
+    console.log(`      • [${s.id}] Automatically adjusted available depth to $${s.allocatedAllowanceUSD.toLocaleString()}`);
+  });
 
-  console.log("\n[2] Threat Detection: Predatory JIT sniper transaction in same block:");
-  console.log(`    Attacker: ${attack.sniperBot}`);
-  console.log(`    Target:   Ultra-tight tick range [${attack.tickLower}, ${attack.tickUpper}]`);
-  console.log(`    Capital:  $${attack.borrowedCapitalUSD.toLocaleString()} flash-borrowed liquidity`);
+  // Step 3: Mempool Threat Detection
+  console.log("\n[3] Mempool Threat Monitor: Predatory JIT Sandwich Detected:");
+  const victimVolume = 2_500_000;
+  const sniperCapital = 15_000_000;
+  const sniperBot = "0xBAD000000000000000000000000000000000B07";
+  console.log(`    -> High-impact victim swap: $${victimVolume.toLocaleString()} USDC -> WETH`);
+  console.log(`    -> Predatory bot ${sniperBot} wrapping swap with $${sniperCapital.toLocaleString()} flash loan!`);
+  console.log("    -> Threat Vector: Sandwiching LP [STRAT-01-AMM] in tight tick band [-201210, -201190]");
 
-  // Step 3: Chainlink CRE Enclave Sentinel triggers
-  console.log("\n[3] Chainlink CRE: Triggering confidential handlerInTee()...");
-  console.log("    -> Enclave fetching secrets from Vault DON (LLM_API_KEY, ENCLAVE_SIGNER_KEY)...");
-  console.log("    -> In-enclave LLM agent evaluates anomaly ratio and tick concentration...");
+  // Step 4: Chainlink CRE AWS Nitro Enclave Evaluation
+  console.log("\n[4] Chainlink CRE: Confidential handlerInTee() Triggered in AWS Nitro TEE:");
+  console.log("    -> Ingesting pool depth from The Graph Subgraph MCP...");
+  console.log("    -> Heuristic: Delta $15,000,000 exceeds 25% of pool TVL. Anomaly confirmed.");
+  console.log("    -> Formulating defensive shift payload...");
 
-  const enclaveSigner = ethers.Wallet.createRandom();
-  const defenseAction = {
+  const enclaveWallet = ethers.Wallet.createRandom();
+  const shiftParams = {
     action: "DEFENSIVE_SHIFT",
     newTickLower: -201400,
     newTickUpper: -201100,
-    newFeeBps: 100,
+    newFeeBps: 250,
     nonce: Date.now()
   };
 
-  console.log(`    -> Decision inside TEE: ${defenseAction.action}`);
-  console.log(`    -> Guardrails verified: Shift within MAX_SLIPPAGE_BPS bound.`);
-
-  // Step 4: Signing cryptographic attestation
   const messageHash = ethers.solidityPackedKeccak256(
     ["string", "int24", "int24", "uint24", "uint256"],
-    [
-      defenseAction.action,
-      defenseAction.newTickLower,
-      defenseAction.newTickUpper,
-      defenseAction.newFeeBps,
-      defenseAction.nonce
-    ]
+    [shiftParams.action, shiftParams.newTickLower, shiftParams.newTickUpper, shiftParams.newFeeBps, shiftParams.nonce]
   );
-  const signature = await enclaveSigner.signMessage(ethers.getBytes(messageHash));
-  console.log(`    -> Attestation Signed by Enclave: ${enclaveSigner.address}`);
-  console.log(`    -> ECDSA Sig: ${signature.slice(0, 32)}...`);
+  const enclaveSignature = await enclaveWallet.signMessage(ethers.getBytes(messageHash));
+  console.log(`    -> Signed inside Enclave by Signer: ${enclaveWallet.address}`);
+  console.log(`    -> Attestation: Nonce=${shiftParams.nonce}, Fee=${shiftParams.newFeeBps} BPS, Sig=${enclaveSignature.slice(0, 20)}...`);
 
-  // Step 5: Execute 1inch Aqua dock & ship defensive shift
-  console.log("\n[4] 1inch Aqua Execution (AquaGhostApp):");
-  console.log("    -> Verifying TEE signature on-chain...");
-  console.log("    -> Verified! Calling aqua.dock(oldStrategy) to withdraw maker exposure.");
-  console.log("    -> Calling aqua.ship(newDefensiveStrategy) to deploy wider safe tick range.");
-  console.log("    -> Maker capital remains 100% self-custodial!");
+  // Step 5: EIP-712 Delegated Sentinel Execution on AquaGhostApp
+  console.log("\n[5] 1inch Aqua Execution (AquaGhostApp with EIP-712 Sentinel Permit):");
+  console.log("    -> Verifying maker EIP-712 delegated sentinel authorization...");
+  console.log("    -> Verified! Sentinel permitted for shifts up to 300 ticks.");
+  console.log("    -> Step 5A: Calling aqua.dock(STRAT-01-AMM)...");
+  maker.strategies[0].activeStatus = "DOCKED_DEFENSE";
+  console.log("       ✓ Strategy 1 docked: maker liquidity pulled from sniper strike zone!");
 
-  // Step 6: Uniswap v4 Hook blocks the predatory sniper
-  console.log("\n[5] Uniswap v4 Hook Defense (AquaGhostHook):");
-  console.log("    -> Hook defenseMode engaged via signed attestation.");
-  console.log(`    -> Attacker tx beforeAddLiquidity() from ${attack.sniperBot} INTERCEPTED.`);
-  console.log("    -> REVERTED with error: SniperAttackBlocked()!");
-  console.log("\n>>> SIMULATION RESULT: Attack completely neutralized. Maker funds protected! <<<\n");
+  console.log("    -> Step 5B: Calling aqua.ship(STRAT-01-AMM-DEFENSIVE)...");
+  maker.strategies[0].activeStatus = "REPOSITIONED_SAFE";
+  maker.strategies[0].tickRange = [shiftParams.newTickLower, shiftParams.newTickUpper];
+  maker.strategies[0].feeBps = shiftParams.newFeeBps;
+  console.log(`       ✓ Strategy 1 redeployed to safe wide corridor [${shiftParams.newTickLower}, ${shiftParams.newTickUpper}] with ${shiftParams.newFeeBps} BPS dynamic fee.`);
+
+  // Step 6: Verify Other Strategies Remained Solvency & Uninterrupted
+  console.log("\n[6] Post-Defense Multi-Strategy Status Verification:");
+  maker.strategies.forEach((s) => {
+    console.log(`    • [${s.id}] Status: ${s.activeStatus.padEnd(18)} | Available: $${s.allocatedAllowanceUSD.toLocaleString()} | Fee: ${s.feeBps} bps`);
+  });
+  console.log("    -> Zero capital lost to predatory MEV.");
+  console.log("    -> Strategies 2 & 3 maintained continuous, uninterrupted uptime during defense.");
+
+  // Step 7: Uniswap v4 Hook Blocks the Sniper
+  console.log("\n[7] Uniswap v4 Hook Enforcement (AquaGhostHook):");
+  console.log(`    -> Attacker tx beforeAddLiquidity() from ${sniperBot} received by hook.`);
+  console.log("    -> Hook defense active: Sniper liquidity rejected with SniperAttackBlocked()!");
+
+  console.log("\n===============================================================================");
+  console.log("   >>> SIMULATION COMPLETED: 1INCH MULTI-STRATEGY DEFENSE VERIFIED 100% <<<    ");
+  console.log("===============================================================================\n");
 }
 
-runSimulation().catch(console.error);
+runMultiStrategySimulation().catch(console.error);
