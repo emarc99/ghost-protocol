@@ -7,14 +7,16 @@ import { IERC20 } from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
+import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /**
  * @title AquaGhostApp
- * @notice 1inch Aqua App integrating Chainlink CRE AWS Nitro Enclave defense attestations.
+ * @notice 1inch Aqua App integrating Chainlink CRE AWS Nitro Enclave defense attestations
+ *         and EIP-712 delegated sentinel authorizations.
  *         Implements canonical IAquaApp interface (quote/swap) alongside autonomous self-custodial
  *         repositioning via dock() and ship() primitives when predatory MEV/JIT events are detected.
  */
-contract AquaGhostApp is IAquaApp {
+contract AquaGhostApp is IAquaApp, EIP712 {
     using SafeERC20 for IERC20;
     using ECDSA for bytes32;
     using MessageHashUtils for bytes32;
@@ -22,6 +24,19 @@ contract AquaGhostApp is IAquaApp {
     IAqua public immutable aqua;
     address public immutable trustedEnclaveSigner;
     mapping(uint256 => bool) public executedNonces;
+
+    bytes32 public constant DELEGATED_SENTINEL_PERMIT_TYPEHASH = keccak256(
+        "DelegatedSentinelPermit(address maker,address sentinel,uint256 maxShiftMagnitude,uint256 deadline,uint256 nonce)"
+    );
+
+    struct SentinelDelegation {
+        address sentinel;
+        uint256 maxShiftMagnitude;
+        uint256 deadline;
+    }
+
+    mapping(address => SentinelDelegation) public delegations;
+    mapping(address => uint256) public makerNonces;
 
     struct GhostStrategy {
         address maker;
@@ -46,12 +61,24 @@ contract AquaGhostApp is IAquaApp {
     error InvalidTokens(address tokenIn, address tokenOut);
     error SlippageExceeded(uint256 expected, uint256 actual);
     error ZeroAddress();
+    error UnauthorizedSentinel();
+    error DelegationExpired();
+    error ShiftMagnitudeExceeded(uint256 requested, uint256 maxAllowed);
+    error InvalidMakerSignature();
 
     event DefensiveRepositionExecuted(
         address indexed maker,
         bytes32 oldHash,
         bytes32 newHash,
         uint256 indexed nonce
+    );
+
+    event SentinelDelegated(
+        address indexed maker,
+        address indexed sentinel,
+        uint256 maxShiftMagnitude,
+        uint256 deadline,
+        uint256 nonce
     );
 
     event AquaGhostSwap(
@@ -63,10 +90,80 @@ contract AquaGhostApp is IAquaApp {
         uint256 amountOut
     );
 
-    constructor(IAqua _aqua, address _enclaveSigner) {
+    constructor(IAqua _aqua, address _enclaveSigner)
+        EIP712("AquaGhostApp", "1.0.0")
+    {
         if (address(_aqua) == address(0) || _enclaveSigner == address(0)) revert ZeroAddress();
         aqua = _aqua;
         trustedEnclaveSigner = _enclaveSigner;
+    }
+
+    // =========================================================================
+    // EIP-712 Delegated Sentinel Authorization
+    // =========================================================================
+
+    /**
+     * @notice Authorizes a sentinel to trigger bounded defensive shifts on behalf of maker via EIP-712.
+     * @param maker The sovereign maker / LP wallet
+     * @param sentinel The authorized automated bot or sentinel address
+     * @param maxShiftMagnitude Maximum allowed lower-tick relocation distance
+     * @param deadline Expiration timestamp for the delegation
+     * @param signature EIP-712 signature from maker
+     */
+    function permitDelegatedSentinel(
+        address maker,
+        address sentinel,
+        uint256 maxShiftMagnitude,
+        uint256 deadline,
+        bytes calldata signature
+    ) external {
+        if (block.timestamp > deadline) revert DelegationExpired();
+        if (sentinel == address(0) || maker == address(0)) revert ZeroAddress();
+
+        uint256 currentNonce = makerNonces[maker]++;
+        bytes32 structHash = keccak256(
+            abi.encode(
+                DELEGATED_SENTINEL_PERMIT_TYPEHASH,
+                maker,
+                sentinel,
+                maxShiftMagnitude,
+                deadline,
+                currentNonce
+            )
+        );
+
+        bytes32 hash = _hashTypedDataV4(structHash);
+        address recoveredSigner = hash.recover(signature);
+        if (recoveredSigner != maker) revert InvalidMakerSignature();
+
+        delegations[maker] = SentinelDelegation({
+            sentinel: sentinel,
+            maxShiftMagnitude: maxShiftMagnitude,
+            deadline: deadline
+        });
+
+        emit SentinelDelegated(maker, sentinel, maxShiftMagnitude, deadline, currentNonce);
+    }
+
+    /**
+     * @notice Direct on-chain authorization of a delegated sentinel by the maker.
+     */
+    function setDelegatedSentinel(
+        address sentinel,
+        uint256 maxShiftMagnitude,
+        uint256 deadline
+    ) external {
+        if (block.timestamp > deadline) revert DelegationExpired();
+        if (sentinel == address(0)) revert ZeroAddress();
+
+        uint256 currentNonce = makerNonces[msg.sender]++;
+        delegations[msg.sender] = SentinelDelegation({
+            sentinel: sentinel,
+            maxShiftMagnitude: maxShiftMagnitude,
+            deadline: deadline
+        });
+
+        emit SentinelDelegated(msg.sender, sentinel, maxShiftMagnitude, deadline, currentNonce);
     }
 
     // =========================================================================
@@ -183,7 +280,21 @@ contract AquaGhostApp is IAquaApp {
         if (params.newFeeBps > 10000) revert InvalidFeeBps(params.newFeeBps);
         executedNonces[params.nonce] = true;
 
-        // 1. Verify CRE Enclave Attestation
+        // 1. Verify Delegated Sentinel Authorization if caller is not the maker
+        if (msg.sender != currentStrategy.maker) {
+            SentinelDelegation memory del = delegations[currentStrategy.maker];
+            if (del.sentinel != msg.sender) revert UnauthorizedSentinel();
+            if (block.timestamp > del.deadline) revert DelegationExpired();
+
+            int24 lowerDiff = params.newTickLower > currentStrategy.tickLower
+                ? params.newTickLower - currentStrategy.tickLower
+                : currentStrategy.tickLower - params.newTickLower;
+            if (uint256(int256(lowerDiff)) > del.maxShiftMagnitude) {
+                revert ShiftMagnitudeExceeded(uint256(int256(lowerDiff)), del.maxShiftMagnitude);
+            }
+        }
+
+        // 2. Verify CRE Enclave Attestation
         bytes32 messageHash = keccak256(
             abi.encodePacked("DEFENSIVE_SHIFT", params.newTickLower, params.newTickUpper, params.newFeeBps, params.nonce)
         ).toEthSignedMessageHash();

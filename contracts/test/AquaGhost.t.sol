@@ -219,6 +219,157 @@ contract AquaGhostTest is Test {
     }
 
     // =========================================================================
+    // EIP-712 Delegated Sentinel Unit Tests
+    // =========================================================================
+
+    function test_App_DelegatedSentinel_Permit_Success() public {
+        uint256 makerPk = 0xAA11;
+        address maker = vm.addr(makerPk);
+        address sentinel = address(0x5E4714E1);
+        uint256 maxShiftMagnitude = 300;
+        uint256 deadline = block.timestamp + 1 hours;
+        uint256 nonce = aquaGhostApp.makerNonces(maker);
+
+        bytes32 structHash = keccak256(
+            abi.encode(
+                aquaGhostApp.DELEGATED_SENTINEL_PERMIT_TYPEHASH(),
+                maker,
+                sentinel,
+                maxShiftMagnitude,
+                deadline,
+                nonce
+            )
+        );
+
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
+                keccak256(bytes("AquaGhostApp")),
+                keccak256(bytes("1.0.0")),
+                block.chainid,
+                address(aquaGhostApp)
+            )
+        );
+
+        bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(makerPk, digest);
+        bytes memory makerSignature = abi.encodePacked(r, s, v);
+
+        aquaGhostApp.permitDelegatedSentinel(maker, sentinel, maxShiftMagnitude, deadline, makerSignature);
+
+        (address assignedSentinel, uint256 allowedMagnitude, uint256 expDeadline) = aquaGhostApp.delegations(maker);
+        assertEq(assignedSentinel, sentinel);
+        assertEq(allowedMagnitude, maxShiftMagnitude);
+        assertEq(expDeadline, deadline);
+
+        AquaGhostApp.GhostStrategy memory initialStrategy = AquaGhostApp.GhostStrategy({
+            maker: maker,
+            token0: address(0x1111),
+            token1: address(0x2222),
+            tickLower: -201200,
+            tickUpper: -201000,
+            feeBps: 30
+        });
+
+        AquaGhostApp.ShiftParams memory params = AquaGhostApp.ShiftParams({
+            newTickLower: -201400,
+            newTickUpper: -201100,
+            newFeeBps: 100,
+            nonce: 888
+        });
+
+        bytes32 rawHash = keccak256(
+            abi.encodePacked("DEFENSIVE_SHIFT", params.newTickLower, params.newTickUpper, params.newFeeBps, params.nonce)
+        );
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 ev, bytes32 er, bytes32 es) = vm.sign(enclavePrivateKey, ethSignedHash);
+        bytes memory enclaveSignature = abi.encodePacked(er, es, ev);
+
+        address[] memory tokens = new address[](0);
+        uint256[] memory amounts = new uint256[](0);
+
+        vm.prank(sentinel);
+        aquaGhostApp.executeDefensiveShift(initialStrategy, params, enclaveSignature, tokens, amounts);
+        assertTrue(aquaGhostApp.executedNonces(888));
+    }
+
+    function test_App_DelegatedSentinel_RevertOnShiftMagnitudeExceeded() public {
+        uint256 makerPk = 0xAA22;
+        address maker = vm.addr(makerPk);
+        address sentinel = address(0x5E4714E2);
+        uint256 maxShiftMagnitude = 100;
+        uint256 deadline = block.timestamp + 1 hours;
+
+        vm.prank(maker);
+        aquaGhostApp.setDelegatedSentinel(sentinel, maxShiftMagnitude, deadline);
+
+        AquaGhostApp.GhostStrategy memory initialStrategy = AquaGhostApp.GhostStrategy({
+            maker: maker,
+            token0: address(0x1111),
+            token1: address(0x2222),
+            tickLower: -201200,
+            tickUpper: -201000,
+            feeBps: 30
+        });
+
+        AquaGhostApp.ShiftParams memory params = AquaGhostApp.ShiftParams({
+            newTickLower: -201400, // 200 tick shift > 100 max
+            newTickUpper: -201100,
+            newFeeBps: 100,
+            nonce: 889
+        });
+
+        bytes32 rawHash = keccak256(
+            abi.encodePacked("DEFENSIVE_SHIFT", params.newTickLower, params.newTickUpper, params.newFeeBps, params.nonce)
+        );
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 ev, bytes32 er, bytes32 es) = vm.sign(enclavePrivateKey, ethSignedHash);
+        bytes memory enclaveSignature = abi.encodePacked(er, es, ev);
+
+        address[] memory tokens = new address[](0);
+        uint256[] memory amounts = new uint256[](0);
+
+        vm.prank(sentinel);
+        vm.expectRevert(abi.encodeWithSelector(AquaGhostApp.ShiftMagnitudeExceeded.selector, 200, 100));
+        aquaGhostApp.executeDefensiveShift(initialStrategy, params, enclaveSignature, tokens, amounts);
+    }
+
+    function test_App_DelegatedSentinel_RevertOnUnauthorizedCaller() public {
+        address maker = address(0xAAAA);
+        address attacker = address(0xDEAD);
+
+        AquaGhostApp.GhostStrategy memory initialStrategy = AquaGhostApp.GhostStrategy({
+            maker: maker,
+            token0: address(0x1111),
+            token1: address(0x2222),
+            tickLower: -201200,
+            tickUpper: -201000,
+            feeBps: 30
+        });
+
+        AquaGhostApp.ShiftParams memory params = AquaGhostApp.ShiftParams({
+            newTickLower: -201400,
+            newTickUpper: -201100,
+            newFeeBps: 100,
+            nonce: 890
+        });
+
+        bytes32 rawHash = keccak256(
+            abi.encodePacked("DEFENSIVE_SHIFT", params.newTickLower, params.newTickUpper, params.newFeeBps, params.nonce)
+        );
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 ev, bytes32 er, bytes32 es) = vm.sign(enclavePrivateKey, ethSignedHash);
+        bytes memory enclaveSignature = abi.encodePacked(er, es, ev);
+
+        address[] memory tokens = new address[](0);
+        uint256[] memory amounts = new uint256[](0);
+
+        vm.prank(attacker);
+        vm.expectRevert(AquaGhostApp.UnauthorizedSentinel.selector);
+        aquaGhostApp.executeDefensiveShift(initialStrategy, params, enclaveSignature, tokens, amounts);
+    }
+
+    // =========================================================================
     // AquaGhostHook Unit Tests
     // =========================================================================
 
