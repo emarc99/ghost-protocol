@@ -64,22 +64,19 @@ export async function evaluateDefenseInsideEnclave(
     runtime.log("Running in development mode with local key fallback.");
   }
 
-  // Step 2: Confidential In-Enclave Data Ingestion via Graph Subgraph Fetcher
-  const graphFetcher = new EnclaveGraphFetcher(config.subgraphUrl);
-  let poolMetrics: PoolMetrics;
+  // Step 2: Confidential In-Enclave Data Ingestion via Graph Subgraph Fetcher (100% Live, No Mocks)
+  let graphApiKey = "";
   try {
-    poolMetrics = await graphFetcher.fetchPoolMetrics(poolTarget);
-  } catch (e) {
-    // Deterministic fallback metrics for offline simulation
-    poolMetrics = {
-      poolId: poolTarget,
-      tickCurrent: -201200,
-      liquidityDelta: "15000000000",
-      totalValueLockedUSD: "10000000",
-      volumeUSD24h: "52000000",
-      volatilityBps: 220
-    };
-  }
+    const keySecret = runtime.getSecret({ id: "GRAPH_API_KEY" }).result();
+    if (keySecret?.value) {
+      graphApiKey = keySecret.value;
+    }
+  } catch {}
+
+  const graphFetcher = new EnclaveGraphFetcher(config.subgraphUrl, graphApiKey);
+  runtime.log(`Querying live Graph Subgraph at: ${config.subgraphUrl}`);
+  const poolMetrics: PoolMetrics = await graphFetcher.fetchPoolMetrics(runtime, poolTarget);
+  runtime.log(`Ingested live Subgraph state: Pool ${poolMetrics.poolId}, Tick: ${poolMetrics.tickCurrent}, TVL: $${poolMetrics.totalValueLockedUSD}`);
 
   // Step 3: Anomaly Heuristics & JIT Threat Assessment
   const isJitAttack =

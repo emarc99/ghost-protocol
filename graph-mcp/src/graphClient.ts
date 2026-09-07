@@ -11,40 +11,52 @@ export class TheGraphClient {
   }
 
   /**
-   * Execute an authenticated GraphQL query against The Graph Gateway
+   * Execute an authenticated GraphQL query against The Graph Gateway with retry logic.
    */
-  async executeQuery<T>(query: string, variables: Record<string, any> = {}): Promise<T> {
+  async executeQuery<T>(query: string, variables: Record<string, any> = {}, maxRetries: number = 3): Promise<T> {
     const url = this.apiKey && this.endpoint.includes("gateway.thegraph.com")
       ? this.endpoint.replace("/api/public/", `/api/${this.apiKey}/`)
       : this.endpoint;
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "User-Agent": "AquaGhost-GraphMCP/1.0"
-      },
-      body: JSON.stringify({ query, variables })
-    });
+    let lastError: Error | null = null;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "User-Agent": "AquaGhost-GraphMCP/1.0"
+          },
+          body: JSON.stringify({ query, variables })
+        });
 
-    if (!response.ok) {
-      throw new Error(`The Graph network query failed: ${response.status} ${response.statusText}`);
+        if (!response.ok) {
+          throw new Error(`The Graph network query failed: ${response.status} ${response.statusText}`);
+        }
+
+        const payload = (await response.json()) as { data?: T; errors?: any[] };
+        if (payload.errors && payload.errors.length > 0) {
+          throw new Error(`The Graph GraphQL error: ${payload.errors[0].message}`);
+        }
+
+        if (!payload.data) {
+          throw new Error("The Graph response returned empty data");
+        }
+
+        return payload.data;
+      } catch (err: any) {
+        lastError = err;
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, attempt * 300));
+        }
+      }
     }
 
-    const payload = (await response.json()) as { data?: T; errors?: any[] };
-    if (payload.errors && payload.errors.length > 0) {
-      throw new Error(`The Graph GraphQL error: ${payload.errors[0].message}`);
-    }
-
-    if (!payload.data) {
-      throw new Error("The Graph response returned empty data");
-    }
-
-    return payload.data;
+    throw new Error(`The Graph query failed after ${maxRetries} attempts: ${lastError?.message}`);
   }
 
   /**
-   * Tool 1: Fetch real-time pool metrics snapshot from The Graph
+   * Tool 1: Fetch real-time pool metrics snapshot from The Graph (100% Live, No Mocks)
    */
   async getPoolSnapshot(poolId: string): Promise<PoolSnapshot> {
     const query = `
@@ -63,40 +75,26 @@ export class TheGraphClient {
       }
     `;
 
-    try {
-      const data = await this.executeQuery<{ pool: any }>(query, { id: poolId.toLowerCase() });
-      if (!data.pool) {
-        throw new Error(`Pool ${poolId} not found in Subgraph`);
-      }
-      return {
-        id: data.pool.id,
-        token0: data.pool.token0,
-        token1: data.pool.token1,
-        feeTier: data.pool.feeTier,
-        tick: Number(data.pool.tick || -201200),
-        liquidity: data.pool.liquidity || "100000000000",
-        totalValueLockedUSD: data.pool.totalValueLockedUSD || "50000000",
-        volumeUSD24h: data.pool.volumeUSD || "12000000",
-        txCount: data.pool.txCount || "450000"
-      };
-    } catch (err: any) {
-      // Fallback deterministic snapshot for offline / sandbox mode
-      return {
-        id: poolId.toLowerCase(),
-        token0: { id: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2", symbol: "WETH", decimals: "18" },
-        token1: { id: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48", symbol: "USDC", decimals: "6" },
-        feeTier: "500",
-        tick: -201200,
-        liquidity: "18446744073709551615",
-        totalValueLockedUSD: "48500000",
-        volumeUSD24h: "14200000",
-        txCount: "528400"
-      };
+    const data = await this.executeQuery<{ pool: any }>(query, { id: poolId.toLowerCase() });
+    if (!data.pool) {
+      throw new Error(`Pool ${poolId} not found on The Graph Network Subgraph`);
     }
+
+    return {
+      id: data.pool.id,
+      token0: data.pool.token0,
+      token1: data.pool.token1,
+      feeTier: data.pool.feeTier,
+      tick: Number(data.pool.tick),
+      liquidity: data.pool.liquidity,
+      totalValueLockedUSD: data.pool.totalValueLockedUSD,
+      volumeUSD24h: data.pool.volumeUSD,
+      txCount: data.pool.txCount
+    };
   }
 
   /**
-   * Tool 2: Fetch concentrated liquidity distribution around tick boundaries
+   * Tool 2: Fetch concentrated liquidity distribution around tick boundaries (100% Live, No Mocks)
    */
   async getTickLiquidity(poolId: string, limit: number = 10): Promise<TickLiquidity[]> {
     const query = `
@@ -111,29 +109,22 @@ export class TheGraphClient {
       }
     `;
 
-    try {
-      const data = await this.executeQuery<{ ticks: any[] }>(query, {
-        poolId: poolId.toLowerCase(),
-        limit
-      });
-      return (data.ticks || []).map(t => ({
-        tickIdx: Number(t.tickIdx),
-        liquidityGross: t.liquidityGross,
-        liquidityNet: t.liquidityNet,
-        price0: t.price0,
-        price1: t.price1
-      }));
-    } catch (err) {
-      // High-fidelity fallback tick ladder centered around -201200
-      const center = -201200;
-      return [
-        { tickIdx: center - 120, liquidityGross: "85000000000", liquidityNet: "42000000000", price0: "0.00033", price1: "3030.30" },
-        { tickIdx: center - 60,  liquidityGross: "125000000000", liquidityNet: "68000000000", price0: "0.00033", price1: "3020.10" },
-        { tickIdx: center,       liquidityGross: "210000000000", liquidityNet: "95000000000", price0: "0.00033", price1: "3010.00" },
-        { tickIdx: center + 60,  liquidityGross: "118000000000", liquidityNet: "-51000000000", price0: "0.00033", price1: "2999.80" },
-        { tickIdx: center + 120, liquidityGross: "72000000000", liquidityNet: "-34000000000", price0: "0.00033", price1: "2989.50" }
-      ];
+    const data = await this.executeQuery<{ ticks: any[] }>(query, {
+      poolId: poolId.toLowerCase(),
+      limit
+    });
+
+    if (!data.ticks || data.ticks.length === 0) {
+      throw new Error(`No tick liquidity data found on The Graph for pool ${poolId}`);
     }
+
+    return data.ticks.map(t => ({
+      tickIdx: Number(t.tickIdx),
+      liquidityGross: t.liquidityGross,
+      liquidityNet: t.liquidityNet,
+      price0: t.price0,
+      price1: t.price1
+    }));
   }
 
   /**
@@ -142,7 +133,12 @@ export class TheGraphClient {
   async analyzeJitThreat(poolId: string, mempoolSurgeDelta: string = "15000000000"): Promise<JitThreatAnalysis> {
     const snapshot = await this.getPoolSnapshot(poolId);
     const deltaNumber = Number(mempoolSurgeDelta);
-    const poolLiquidity = Number(snapshot.liquidity.slice(0, 15)) || 10000000000;
+
+    const parsedLiquidity = BigInt(snapshot.liquidity || "0");
+    if (parsedLiquidity === 0n) {
+      throw new Error(`Pool ${poolId} has zero active liquidity on The Graph; cannot evaluate JIT risk.`);
+    }
+    const poolLiquidity = Number(snapshot.liquidity.slice(0, 15)) || 1;
 
     // A JIT attack is flagged when incoming 0-block liquidity delta exceeds 25% of active pool depth
     const ratio = deltaNumber / poolLiquidity;

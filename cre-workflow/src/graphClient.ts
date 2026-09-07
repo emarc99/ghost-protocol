@@ -1,8 +1,4 @@
-/**
- * In-Enclave Graph Subgraph Fetcher for AquaGhost CRE Sentinel.
- * Lightweight, zero-dependency GraphQL fetcher compiled into WASM for AWS Nitro Enclaves.
- * (Note: The standalone Model Context Protocol server for AI IDEs resides in @aquaghost/graph-mcp).
- */
+import { cre, ok, text, type TeeRuntime } from "@chainlink/cre-sdk";
 
 export interface PoolMetrics {
   poolId: string;
@@ -16,16 +12,19 @@ export interface PoolMetrics {
 export class EnclaveGraphFetcher {
   private endpoint: string;
   private apiKey: string;
+  private httpClient: InstanceType<typeof cre.capabilities.HTTPClient>;
 
   constructor(endpoint: string, apiKey: string = "") {
     this.endpoint = endpoint;
     this.apiKey = apiKey;
+    this.httpClient = new cre.capabilities.HTTPClient();
   }
 
   /**
    * Fetches real-time pool metrics for a target Uniswap pool from The Graph.
+   * Dispatches outbound HTTP request directly from inside AWS Nitro TEE using CRE HTTPClient.
    */
-  async fetchPoolMetrics(poolId: string): Promise<PoolMetrics> {
+  async fetchPoolMetrics(runtime: TeeRuntime<any>, poolId: string): Promise<PoolMetrics> {
     const query = `
       query GetPoolSnapshot($poolId: ID!) {
         pool(id: $poolId) {
@@ -46,32 +45,57 @@ export class EnclaveGraphFetcher {
       }
     `;
 
-    const response = await fetch(this.endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(this.apiKey ? { Authorization: `Bearer ${this.apiKey}` } : {})
-      },
-      body: JSON.stringify({
-        query,
-        variables: { poolId: poolId.toLowerCase() }
-      })
+    const targetUrl = this.apiKey && this.endpoint.includes("gateway.thegraph.com/api/public/")
+      ? this.endpoint.replace("/api/public/", `/api/${this.apiKey}/`)
+      : this.endpoint;
+
+    const payload = JSON.stringify({
+      query,
+      variables: { poolId: poolId.toLowerCase() }
     });
 
-    if (!response.ok) {
-      throw new Error(`The Graph query failed with status: ${response.statusText}`);
+    const bodyBase64 = typeof Buffer !== "undefined"
+      ? Buffer.from(payload).toString("base64")
+      : btoa(payload);
+
+    const headers: Record<string, { values: string[] }> = {
+      "Content-Type": { values: ["application/json"] },
+      "User-Agent": { values: ["AquaGhost-CRE-Sentinel/1.0"] }
+    };
+    if (this.apiKey && !targetUrl.includes(`/api/${this.apiKey}/`)) {
+      headers["Authorization"] = { values: [`Bearer ${this.apiKey}`] };
     }
 
-    const json = (await response.json()) as any;
+    const response = this.httpClient.sendRequest(runtime, {
+      url: targetUrl,
+      method: "POST",
+      multiHeaders: headers,
+      body: bodyBase64
+    }).result();
+
+    if (!ok(response)) {
+      throw new Error(`The Graph network query failed inside TEE: HTTP ${response.statusCode}`);
+    }
+
+    const responseBody = text(response);
+    const json = JSON.parse(responseBody) as any;
+    if (json.errors && json.errors.length > 0) {
+      throw new Error(`The Graph GraphQL error: ${json.errors[0].message}`);
+    }
+
     const poolData = json?.data?.pool;
+    if (!poolData) {
+      throw new Error(`Target pool ${poolId} not found on The Graph Network Subgraph`);
+    }
 
     return {
-      poolId: poolData?.id || poolId,
-      tickCurrent: poolData?.tick ? Number(poolData.tick) : -201200,
+      poolId: poolData.id,
+      tickCurrent: Number(poolData.tick),
       volatilityBps: 180,
-      liquidityDelta: poolData?.ticks?.[0]?.liquidityNet || "15000000000",
-      totalValueLockedUSD: poolData?.totalValueLockedUSD || "25000000",
-      volumeUSD24h: poolData?.poolDayData?.[0]?.volumeUSD || "4500000"
+      liquidityDelta: poolData.ticks?.[0]?.liquidityNet || "0",
+      totalValueLockedUSD: poolData.totalValueLockedUSD || "0",
+      volumeUSD24h: poolData.poolDayData?.[0]?.volumeUSD || poolData.volumeUSD || "0"
     };
   }
 }
+

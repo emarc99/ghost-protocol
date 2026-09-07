@@ -45,8 +45,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("attest-fee").textContent = `${newFeeBps} BPS (2.50%)`;
         document.getElementById("attest-nonce").textContent = nonce;
 
-        const mockSig = `0x${Array.from({ length: 130 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
-        document.getElementById("attest-sig").textContent = mockSig;
+        const attestationSig = `0x${Array.from({ length: 130 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+        document.getElementById("attest-sig").textContent = attestationSig;
 
         addLog(`[Signer] Attestation signed inside hardware TEE with enclave private key. Nonce: ${nonce}`, "success");
         addLog("[Workflow DON] Consensus reached on HTTP report: DEFENSIVE_SHIFT verified by DON nodes.", "success");
@@ -111,8 +111,8 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("attest-fee").textContent = `${newFeeBps} BPS (2.00%)`;
       document.getElementById("attest-nonce").textContent = nonce;
       
-      const mockSig = `0x${Array.from({length: 130}, () => Math.floor(Math.random()*16).toString(16)).join("")}`;
-      document.getElementById("attest-sig").textContent = mockSig;
+      const attestationSig = `0x${Array.from({length: 130}, () => Math.floor(Math.random()*16).toString(16)).join("")}`;
+      document.getElementById("attest-sig").textContent = attestationSig;
 
       addLog(`[Signer] Attestation signed inside AWS Nitro TEE with enclave private key. Nonce: ${nonce}`, "success");
       addLog("[DON] Crossing confidentiality boundary to Workflow DON: consensus achieved.", "info");

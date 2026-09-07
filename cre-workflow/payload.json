@@ -1,6 +1,5 @@
 {
-  "poolTarget": "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640",
+  "forceDefensive": true,
   "riskThresholdBps": 150,
-  "maxSlippageBps": 500,
-  "forceDefensive": true
+  "maxSlippageBps": 500
 }
