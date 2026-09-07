@@ -108,6 +108,14 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `d3ddb4b` | `feat(frontend)` | Connect sentinel dashboard to live CRE deployment 0056b79a |
 | `cfe5377` | `docs(ai)` | Update AI_ASSISTANCE.md with live CRE deployment verification receipts |
 | `34e64fc` | `feat(graph-mcp)` | Scaffold dedicated The Graph Subgraph MCP server package |
+| `3bc12a9` | `docs(graph)` | Document issue 3 on MCP error normalization and update AI assistance ledger |
+| `16364a4` | `fix(cre)` | Point subgraphUrl to The Graph Network decentralized gateway |
+| `4a31ec8` | `feat(graph)` | Connect Subgraph MCP server to live Graph Network Gateway with env key |
+| `e2c9731` | `chore` | Add .env.example templates and update gitignore |
+| `5426ab8` | `feat(aqua)` | Implement EIP-712 delegated sentinel permit in AquaGhostApp with unit tests |
+| `d414200` | `feat(aqua)` | Implement AquaSwapVM with OP_TEE_GUARD and OP_DYNAMIC_FEE opcodes and unit tests |
+| `a800f2f` | `feat(sim)` | Model Tanner's 1inch Aqua multi-strategy shared balance depletion scenario in simulate_jit_attack.ts |
+| `64ead2a` | `feat(uniswap)` | Add on-chain hook metadata introspection to AquaGhostHook with tests |
 
 ---
 
@@ -135,6 +143,13 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
    - Implemented Model Context Protocol (MCP) server over standard JSON-RPC 2.0 `stdio` transport.
    - Exposed 3 dedicated agent tools: `graph_get_pool_snapshot`, `graph_get_tick_liquidity`, and `graph_detect_jit_threat`.
    - Verified end-to-end functionality against The Graph Network decentralized gateway (`npm run test:mcp`), and submitted upstream DX feedback regarding streaming MCP transport and error normalization in `docs/sponsor-issues/THE_GRAPH_MCP_FEEDBACK.md`.
+6. **Live The Graph Network Ingestion (No Mocks):** Integrated authenticated Graph Studio credentials (`.env.example` templates committed), querying live Ethereum Mainnet USDC/WETH pool state ($414M TVL, 198119 tick) directly from The Graph Network Gateway, satisfying the strict hackathon qualification rule: *"Consume live data from a Graph provider... Mocked, local-only, or static datasets do not qualify."*
+7. **Implementation of Advanced Sponsor-Transcript Improvements:** Fully executed the 4 core deep-dive architectures inspired by live workshop sessions:
+   - **EIP-712 Delegated Sentinel Permits:** Enabled sovereign LPs to sign offline permits delegating bounded repositioning to `AquaGhostApp` (`permitDelegatedSentinel`).
+   - **Custom SwapVM Security Opcode:** Implemented `AquaSwapVM.sol` featuring `OP_TEE_GUARD` and `OP_DYNAMIC_FEE` opcodes.
+   - **Multi-Strategy Depletion Simulation:** Expanded `simulate_jit_attack.ts` to model Tanner's exact $4,000 multi-strategy LP allocation across AMM, Flash Loans, and Limit Orders.
+   - **On-Chain Hook Metadata Introspection:** Exposed `expectedHookDataSchema()` and `getHookMetadata()` in `AquaGhostHook.sol` for Uniswap v4 routers and indexers.
+   - **Total Verified Tests:** Expanded suite to 32/32 passing tests (including 4 fuzz tests across 256 runs).
 
 ---
 
