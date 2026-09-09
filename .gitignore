@@ -35,5 +35,6 @@ scratch/
 *.cre_build_tmp.js
 *.wasm.br.b64
 *.wasm
+.next/
 
 
