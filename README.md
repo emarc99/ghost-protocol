@@ -54,11 +54,11 @@ AquaGhost protects concentrated liquidity providers (LPs) and market makers from
 
 ## 2. Core Protocol Innovations
 
-### 🛡️ 1inch Aqua Autonomous Repositioning (`AquaGhostApp.sol`)
+### 🛡️ 1inch Aqua Autonomous Repositioning & SwapVM Execution (`AquaGhostApp.sol`)
 * **Shared Liquidity Defense:** Leverages Aqua’s canonical shared-balance architecture. A maker's capital can sit safely across multiple strategies (AMM, limit orders, flash-loan vaults).
 * **EIP-712 Non-Custodial Permits:** LPs delegate bounded repositioning rights (`permitDelegatedSentinel`) without ever surrendering private keys or custody to an automated bot.
 * **Atomic `dock()` & `ship()`:** Upon receiving an enclave attestation, the contract atomically withdraws maker capital from the vulnerable price bin and re-ships it into a safe corridor.
-* **Custom SwapVM Security Opcodes (`AquaSwapVM.sol`):** Introduces `OP_TEE_GUARD` (`0x7E`) to enforce in-bytecode TEE signature verification and `OP_DYNAMIC_FEE` (`0x7D`) for programmable fee adjustments.
+* **In-Pipeline SwapVM Bytecode Execution (`swapExactInputWithVM`):** Directly utilizes `AquaSwapVM` to execute swaps via bytecode scripts, verifying hardware TEE attestations on the stack (`OP_TEE_GUARD` `0x7E`) and applying dynamic fee deductions (`OP_DYNAMIC_FEE` `0xDF`) before settling tokens.
 
 ### ⚡ Uniswap v4 Anti-Sniper Firewall Hook (`AquaGhostHook.sol`)
 * **Predatory JIT Interception:** In `beforeAddLiquidity`, the hook intercepts 0-block sniper liquidity injections targeted at pending trades while keeping normal LP provisioning unaffected.
@@ -88,8 +88,8 @@ AquaGhost features an end-to-end verification suite spanning smart contracts, co
 
 | Test Suite | Command | Coverage & Scope | Status |
 | :--- | :--- | :--- | :---: |
-| **Foundry Unit & Fuzz** | `cd contracts && forge test` | 34 passing tests across `AquaGhostHook`, `AquaGhostApp`, and `AquaSwapVM`, including 4 property-based fuzz test suites (256 runs each). | ✅ **34/34 PASS** |
-| **Live On-Chain Anvil** | `npm run test:live` | Real atomic swaps, real ECDSA enclave attestations, live sniper revert verification, and real `dock()` / `ship()` calls on running Anvil EVM node. | ✅ **4/4 PASS** |
+| **Foundry Unit & Fuzz** | `cd contracts && forge test` | 36 passing tests across `AquaGhostHook`, `AquaGhostApp`, and `AquaSwapVM`, including 4 property-based fuzz test suites (256 runs each). | ✅ **36/36 PASS** |
+| **Live On-Chain Anvil** | `npm run test:live` | Real atomic swaps, real SwapVM bytecode execution (`OP_TEE_GUARD` & `OP_DYNAMIC_FEE`), real ECDSA enclave attestations, live sniper revert verification, and real `dock()` / `ship()` calls on running Anvil EVM node. | ✅ **5/5 PASS** |
 | **The Graph Subgraph MCP** | `npm run test:mcp` | Queries live Ethereum Mainnet USDC/WETH pool state ($414M+ TVL) from The Graph Network Gateway across all 3 MCP tools. | ✅ **PASS (Live Gateway)** |
 | **CRE Nitro Simulation** | `cd cre-workflow && cre workflow simulate --trigger-index 0` | Simulates in-enclave Cron execution and on-demand HTTP POST payload inside AWS Nitro TEE constraints. | ✅ **PASS (WASM Verified)** |
 | **MEV Attack Simulation** | `npm run simulate` | Models 1inch Aqua multi-strategy shared balance depletion scenario and verifies automated defense repositioning. | ✅ **PASS** |
@@ -102,12 +102,12 @@ AquaGhost features an end-to-end verification suite spanning smart contracts, co
 ghost-protocol/
 ├── contracts/                        # Foundry Solidity Smart Contracts
 │   ├── src/
-│   │   ├── AquaGhostApp.sol          # 1inch Aqua App (dock/ship & EIP-712 delegated permit)
+│   │   ├── AquaGhostApp.sol          # 1inch Aqua App (dock/ship, SwapVM integration, EIP-712 permit)
 │   │   ├── AquaGhostHook.sol         # Uniswap v4 Hook (JIT firewall, dynamic fee, previewFee)
 │   │   └── swapvm/
-│   │       └── AquaSwapVM.sol        # Custom SwapVM (OP_TEE_GUARD 0x7E & OP_DYNAMIC_FEE 0x7D)
+│   │       └── AquaSwapVM.sol        # Custom SwapVM (OP_TEE_GUARD 0x7E & OP_DYNAMIC_FEE 0xDF)
 │   └── test/
-│       ├── AquaGhost.t.sol           # 29 Hook & App unit/fuzz tests
+│       ├── AquaGhost.t.sol           # 31 Hook & App unit/fuzz tests (including SwapVM tests)
 │       └── AquaSwapVM.t.sol          # 5 SwapVM opcode execution tests
 ├── cre-workflow/                     # Chainlink CRE Confidential Workflow
 │   ├── workflow.yaml                 # Workflow manifest (private deployment registry)

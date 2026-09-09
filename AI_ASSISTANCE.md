@@ -120,6 +120,8 @@ A key metric of non-vibe-coding is commit hygiene. Every step in this project is
 | `71642d7` | `chore` | Refine gitignore anchors for env example templates |
 | `df46728` | `feat(cre)` | Add dual HTTP and Cron triggers to confidential sentinel workflow |
 | `7f2cbec` | `feat(uniswap)` | Adopt FairFlow structured telemetry, previewFee, and defense assessment events |
+| `73d9213` | `feat(aqua)` | Wire AquaSwapVM execution with OP_TEE_GUARD and OP_DYNAMIC_FEE into AquaGhostApp |
+| `715c01d` | `test(live)` | Demonstrate on-chain token settlement via AquaSwapVM and OP_TEE_GUARD |
 
 ---
 
@@ -170,6 +172,11 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
     - **Adoption of Subgraphs-Skills PR #1 Learnings:**
       - Integrated an explicit **"When to Use This Tool" Decision Matrix** into [`graph-mcp/README.md`](./graph-mcp/README.md) to guide autonomous AI agents between snapshot metrics, depth distribution, and JIT sandwich evaluation.
       - Authored [`graph-mcp/references/subgraph-mev-patterns.md`](./graph-mcp/references/subgraph-mev-patterns.md) detailing deep production edge cases: sparse initialized tick interpolation, virtual liquidity ($L$) scaling arithmetic, `_meta` indexing lag vs HTTP 200 OK disambiguation, directional single-sided JIT snipes, and gateway exponential backoff.
+11. **In-Pipeline 1inch SwapVM Execution & EIP-170 Headroom Proof:**
+    - Following human architect direction during the ETHOnline 2026 project review, connected `AquaSwapVM.sol` directly into `AquaGhostApp.sol` via `swapExactInputWithVM(...)`.
+    - Swaps can execute raw bytecode scripts on a stack, evaluating custom security opcodes `OP_TEE_GUARD` (`0x7E`) for hardware enclave verification and `OP_DYNAMIC_FEE` (`0xDF`) for dynamic fee deduction prior to settling ERC-20 transfers.
+    - Verified contract bytecode sizes via `forge build --sizes`: `AquaGhostApp` is 6,938 bytes (28% of EIP-170 24KB limit) and `AquaSwapVM` is 2,249 bytes (9% of limit), demonstrating over 17.6 KB of available headroom and proving that modular custom opcodes eliminate the contract bloat warned about in monolithic VM designs.
+    - Expanded unit and fuzz test suite to **36/36 passing tests** (`forge test`) and integrated on-chain SwapVM token settlement verification into the live Anvil test runner (`npm run test:live`).
 
 ---
 

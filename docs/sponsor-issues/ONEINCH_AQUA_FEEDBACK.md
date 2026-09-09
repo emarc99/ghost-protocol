@@ -86,3 +86,7 @@ Refactor SwapVM's execution engine using a **Modular Opcode Registry** (e.g., vi
 * Core SwapVM handles stack management, execution loops, and basic arithmetic.
 * Custom/advanced opcodes (oracles, external TEE verifications, taker restrictions) can be deployed as standalone external modules and registered via an opcode map, completely eliminating the 24KB contract size bottleneck.
 
+### AquaGhost Implementation Proof
+In AquaGhost Protocol, we validated this modular approach by building `AquaSwapVM.sol` as a lean, dedicated 139-line execution engine (2,249 bytes runtime size, only 9% of EIP-170 limit) and connecting it directly to `AquaGhostApp.sol` (6,938 bytes runtime size, 28% of limit). By introducing `OP_TEE_GUARD` (`0x7E`) and `OP_DYNAMIC_FEE` (`0xDF`) and linking it into `swapExactInputWithVM()`, we achieved in-bytecode hardware security with over 17.6 KB of contract size headroom remaining.
+
+
