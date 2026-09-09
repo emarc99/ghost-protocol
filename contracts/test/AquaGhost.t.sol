@@ -4,6 +4,7 @@ pragma solidity 0.8.26;
 import { Test, console2 } from "forge-std/Test.sol";
 import { AquaGhostApp } from "../src/AquaGhostApp.sol";
 import { AquaGhostHook } from "../src/AquaGhostHook.sol";
+import { AquaSwapVM } from "../src/swapvm/AquaSwapVM.sol";
 import { IAqua } from "aqua/interfaces/IAqua.sol";
 import { IPoolManager } from "v4-core/src/interfaces/IPoolManager.sol";
 import { Hooks } from "v4-core/src/libraries/Hooks.sol";
@@ -843,6 +844,122 @@ contract AquaGhostTest is Test {
             abi.encodeWithSelector(AquaGhostApp.InvalidTokens.selector, fakeToken, address(tokenB))
         );
         aquaGhostApp.quoteExactInput(fakeToken, address(tokenB), 1000, data);
+    }
+
+    function test_App_SwapExactInputWithVM_Success() public {
+        address maker = address(0xAAAA);
+        address trader = address(0xBBBB);
+
+        tokenB.mint(maker, 50_000);
+        tokenA.mint(trader, 50_000);
+
+        AquaGhostApp.GhostStrategy memory strategy = AquaGhostApp.GhostStrategy({
+            maker: maker,
+            token0: address(tokenA),
+            token1: address(tokenB),
+            tickLower: -1000,
+            tickUpper: 1000,
+            feeBps: 250 // 2.5%
+        });
+        bytes memory data = abi.encode(strategy);
+
+        // Approvals
+        vm.prank(maker);
+        tokenB.approve(address(aquaGhostApp), type(uint256).max);
+
+        vm.prank(trader);
+        tokenA.approve(address(aquaGhostApp), type(uint256).max);
+
+        // Generate enclave attestation signature for OP_TEE_GUARD
+        bytes32 rawHash = keccak256("AQUA_SWAPVM_GUARD:PASS");
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        // Build SwapVM script: OP_TEE_GUARD -> OP_PUSH(250 BPS = 2.5%) -> OP_DYNAMIC_FEE -> OP_STOP
+        // Input: 10_000. Fee: 2.5% (250). Expected Output: 9,750
+        bytes memory swapScript = abi.encodePacked(
+            aquaGhostApp.swapVM().OP_TEE_GUARD(),
+            rawHash,
+            signature,
+            aquaGhostApp.swapVM().OP_PUSH(),
+            bytes32(uint256(250)),
+            aquaGhostApp.swapVM().OP_DYNAMIC_FEE(),
+            aquaGhostApp.swapVM().OP_STOP()
+        );
+
+        // Execute Swap via SwapVM
+        vm.prank(trader);
+        uint256 amountOut = aquaGhostApp.swapExactInputWithVM(
+            address(tokenA),
+            address(tokenB),
+            10_000,
+            9700,
+            trader,
+            data,
+            swapScript
+        );
+
+        assertEq(amountOut, 9750);
+        assertEq(tokenA.balanceOf(maker), 10_000);
+        assertEq(tokenB.balanceOf(trader), 9750);
+    }
+
+    function test_App_SwapExactInputWithVM_RevertOnInvalidTEEGuard() public {
+        address maker = address(0xAAAA);
+        address trader = address(0xBBBB);
+
+        tokenB.mint(maker, 50_000);
+        tokenA.mint(trader, 50_000);
+
+        AquaGhostApp.GhostStrategy memory strategy = AquaGhostApp.GhostStrategy({
+            maker: maker,
+            token0: address(tokenA),
+            token1: address(tokenB),
+            tickLower: -1000,
+            tickUpper: 1000,
+            feeBps: 250
+        });
+        bytes memory data = abi.encode(strategy);
+
+        // Approvals
+        vm.prank(maker);
+        tokenB.approve(address(aquaGhostApp), type(uint256).max);
+
+        vm.prank(trader);
+        tokenA.approve(address(aquaGhostApp), type(uint256).max);
+
+        // Sign with rogue unauthorized key
+        uint256 rogueKey = 0xBAD;
+        bytes32 rawHash = keccak256("AQUA_SWAPVM_GUARD:FAIL");
+        bytes32 ethSignedHash = rawHash.toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(rogueKey, ethSignedHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        bytes memory swapScript = abi.encodePacked(
+            aquaGhostApp.swapVM().OP_TEE_GUARD(),
+            rawHash,
+            signature,
+            aquaGhostApp.swapVM().OP_STOP()
+        );
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                AquaSwapVM.TEEGuardVerificationFailed.selector,
+                vm.addr(rogueKey),
+                enclaveSigner
+            )
+        );
+        vm.prank(trader);
+        aquaGhostApp.swapExactInputWithVM(
+            address(tokenA),
+            address(tokenB),
+            10_000,
+            9000,
+            trader,
+            data,
+            swapScript
+        );
     }
 }
 

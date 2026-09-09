@@ -8,6 +8,7 @@ import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.s
 import { ECDSA } from "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
+import { AquaSwapVM } from "./swapvm/AquaSwapVM.sol";
 
 /**
  * @title AquaGhostApp
@@ -23,6 +24,7 @@ contract AquaGhostApp is IAquaApp, EIP712 {
 
     IAqua public immutable aqua;
     address public immutable trustedEnclaveSigner;
+    AquaSwapVM public immutable swapVM;
     mapping(uint256 => bool) public executedNonces;
 
     bytes32 public constant DELEGATED_SENTINEL_PERMIT_TYPEHASH = keccak256(
@@ -96,6 +98,7 @@ contract AquaGhostApp is IAquaApp, EIP712 {
         if (address(_aqua) == address(0) || _enclaveSigner == address(0)) revert ZeroAddress();
         aqua = _aqua;
         trustedEnclaveSigner = _enclaveSigner;
+        swapVM = new AquaSwapVM();
     }
 
     // =========================================================================
@@ -246,6 +249,66 @@ contract AquaGhostApp is IAquaApp, EIP712 {
         if (amountIn > maxAmountIn) revert SlippageExceeded(maxAmountIn, amountIn);
 
         GhostStrategy memory strat = abi.decode(strategyData, (GhostStrategy));
+
+        // Atomic settlement from sovereign maker wallet to recipient
+        IERC20(tokenIn).safeTransferFrom(msg.sender, strat.maker, amountIn);
+        IERC20(tokenOut).safeTransferFrom(strat.maker, recipient, amountOut);
+
+        emit AquaGhostSwap(strat.maker, recipient, tokenIn, tokenOut, amountIn, amountOut);
+    }
+
+    // =========================================================================
+    // 1inch SwapVM Bytecode Execution Pipeline
+    // =========================================================================
+
+    /**
+     * @notice Quotes the outbound token amount by executing SwapVM bytecode.
+     * @param tokenIn Inbound token address
+     * @param tokenOut Outbound token address
+     * @param amountIn Inbound token amount
+     * @param strategyData Encoded GhostStrategy
+     * @param swapVMScript Bytecode instructions to execute via AquaSwapVM
+     */
+    function quoteExactInputWithVM(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        bytes calldata strategyData,
+        bytes calldata swapVMScript
+    ) external returns (uint256 amountOut) {
+        GhostStrategy memory strat = abi.decode(strategyData, (GhostStrategy));
+        _validateTokens(strat, tokenIn, tokenOut);
+
+        amountOut = swapVM.execute(swapVMScript, amountIn, trustedEnclaveSigner);
+    }
+
+    /**
+     * @notice Executes an exact input swap using 1inch Aqua SwapVM bytecode execution.
+     *         Evaluates custom opcodes such as OP_TEE_GUARD (0x7E) for hardware TEE verification
+     *         and OP_DYNAMIC_FEE (0xDF) on the stack prior to on-chain token settlement.
+     * @param tokenIn Inbound token address
+     * @param tokenOut Outbound token address
+     * @param amountIn Inbound token amount
+     * @param minAmountOut Minimum acceptable outbound token amount
+     * @param recipient Token receiver address
+     * @param strategyData Encoded GhostStrategy
+     * @param swapVMScript Bytecode instructions to execute via AquaSwapVM
+     */
+    function swapExactInputWithVM(
+        address tokenIn,
+        address tokenOut,
+        uint256 amountIn,
+        uint256 minAmountOut,
+        address recipient,
+        bytes calldata strategyData,
+        bytes calldata swapVMScript
+    ) external returns (uint256 amountOut) {
+        GhostStrategy memory strat = abi.decode(strategyData, (GhostStrategy));
+        _validateTokens(strat, tokenIn, tokenOut);
+
+        // Execute SwapVM bytecode to evaluate opcodes (OP_TEE_GUARD, OP_DYNAMIC_FEE) on the stack
+        amountOut = swapVM.execute(swapVMScript, amountIn, trustedEnclaveSigner);
+        if (amountOut < minAmountOut) revert SlippageExceeded(minAmountOut, amountOut);
 
         // Atomic settlement from sovereign maker wallet to recipient
         IERC20(tokenIn).safeTransferFrom(msg.sender, strat.maker, amountIn);
