@@ -7,7 +7,7 @@ async function main() {
   console.log(`Connected to Network: Chain ID ${network.chainId}`);
 
   const contractsData = JSON.parse(fs.readFileSync("frontend/contracts.json", "utf-8"));
-  const { WETH, USDC, AquaGhostApp, AquaGhostHook, AquaRouter, UniswapPoolCaller } = contractsData.contracts;
+  const { WETH, USDC, AquaGhostApp, AquaGhostHook, AquaRouter, UniswapPoolCaller, AquaSwapVM } = contractsData.contracts;
 
   const erc20Abi = [
     "function name() view returns (string)",
@@ -38,15 +38,18 @@ async function main() {
   // Verify AquaGhostApp on-chain state
   const appAbi = [
     "function aqua() view returns (address)",
-    "function trustedEnclaveSigner() view returns (address)"
+    "function trustedEnclaveSigner() view returns (address)",
+    "function swapVM() view returns (address)"
   ];
   const appContract = new Contract(AquaGhostApp, appAbi, provider);
   const registeredAqua = await appContract.aqua();
   const registeredSigner = await appContract.trustedEnclaveSigner();
+  const registeredSwapVM = await appContract.swapVM();
 
   console.log("\n--- AquaGhostApp On-Chain State ---");
   console.log(`Address:               ${AquaGhostApp}`);
   console.log(`1inch Aqua Router:     ${registeredAqua} (matches: ${registeredAqua === AquaRouter})`);
+  console.log(`AquaSwapVM Engine:     ${registeredSwapVM} (matches: ${registeredSwapVM === AquaSwapVM})`);
   console.log(`Trusted Enclave Signer:${registeredSigner} (matches: ${registeredSigner === contractsData.enclaveSigner})`);
 
   // Verify AquaGhostHook on-chain state

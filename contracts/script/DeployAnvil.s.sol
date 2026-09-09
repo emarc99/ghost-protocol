@@ -114,6 +114,7 @@ contract DeployAnvilScript is Script {
         console2.log("1inch Aqua Router:  ", address(aqua));
         console2.log("Uniswap PoolCaller: ", address(poolCaller));
         console2.log("AquaGhostApp:       ", address(app));
+        console2.log("AquaSwapVM:         ", address(app.swapVM()));
         console2.log("AquaGhostHook:      ", address(hook));
         console2.log("======================================================\n");
     }
