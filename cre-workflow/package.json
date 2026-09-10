@@ -7,8 +7,10 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "simulate": "cre workflow simulate",
-    "deploy": "cre workflow deploy --network staging",
+    "simulate": "cre workflow simulate . -R . -T staging-settings -e .env --trigger-index 0 --non-interactive",
+    "secrets:create": "cre secrets create ./secrets.yaml -R . -e .env -T staging-settings --secrets-auth=browser",
+    "secrets:list": "cre secrets list -R . -T staging-settings --secrets-auth=browser",
+    "deploy": "cre workflow deploy . -R . --target staging-settings",
     "lint": "eslint src --ext .ts"
   },
   "dependencies": {
