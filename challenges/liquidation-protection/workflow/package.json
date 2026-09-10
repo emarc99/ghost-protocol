@@ -1,0 +1,21 @@
+{
+  "name": "aquaghost-liquidation-workflow",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Chainlink CRE Confidential Workflow for Automated Liquidation Protection Challenge",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "simulate": "cre workflow simulate",
+    "deploy": "cre workflow deploy --network staging"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "^1.19.1",
+    "viem": "^2.56.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.4.5"
+  }
+}
