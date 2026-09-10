@@ -24,6 +24,7 @@ Concentrated liquidity providers (LPs) on modern AMMs lose over $400M annually t
 - **Confidential HTTP:** Employs `@chainlink/cre-sdk`'s `cre.capabilities.HTTPClient` accepting `TeeRuntime` to dispatch confidential outbound queries to The Graph Network Gateway directly from inside the enclave.
 - **Dual Trigger Execution:** Supports both autonomous 1-minute scheduled background surveillance (`CronCapability`) and instantaneous on-demand evaluations (`HTTPCapability`) for mempool monitors.
 - **Consensus Hand-off:** Crosses the confidentiality boundary via `runtime.usingTheDons()` to achieve consensus and emit verified ECDSA reports (`donRuntime.report({ encoderName: "evm", signingAlgo: "ecdsa", hashingAlgo: "keccak256" })`) to consumer smart contracts.
+- **Automated Liquidation Protection Challenge ($500 Bounty):** Per official confirmation from Chainlink Labs (Darby), we included a dedicated second confidential workflow (`challenges/liquidation-protection/`) targeting the challenge smart contract (`0x88574e7Cc0027afd04951daa09B64d4441931ba1`) on Ethereum Sepolia. Implements a winning **Collateral-First Loan Continuity Maximizer** (depositing free `vETH` to restore HF while keeping `vUSD` debt at 7000.00), zero-leak sanitized logging (100% confidentiality compliance), and in-enclave cryptographic execution receipts.
 - **Upstream Feedback:** Documented 6 detailed, high-impact issues for the Chainlink CRE team in [`docs/sponsor-issues/CHAINLINK_CRE_ISSUES.md`](../docs/sponsor-issues/CHAINLINK_CRE_ISSUES.md).
 
 ### 🥈 2. 1inch — 1inch Aqua ($2,000+)

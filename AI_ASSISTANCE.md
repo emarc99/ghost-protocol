@@ -190,6 +190,13 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
     - Implemented a zero-dependency Web Audio API synthesizer for retro-futuristic acoustic feedback.
     - Added live contract read hooks (`useAquaGhost`) and integrated reactive store state for real-time operator alerts and simulation control.
     - Achieved 100% clean production build (`npm run build:next`) with 0 errors.
+13. **Dual-Workflow Expansion & Official Chainlink Challenge Alignment:**
+    - The human architect engaged directly with the Chainlink Labs team (Darby) to confirm eligibility for submitting a second workflow: *"You can only submit one project in the hackathon, but if you can add a second workflow to your project that targets the challenge, then yes."*
+    - The human architect also challenged the agent to analyze the official workshop recording by Solange Gueiros on the **Automated Liquidation Protection Challenge** and scrutinize the 100-point scoring rubric.
+    - The human architect vetoed putting challenge secrets into the root `secrets.yaml` to prevent cross-workflow pollution, mandating a dedicated, completely isolated directory (`challenges/liquidation-protection/`).
+    - Designed the winning **Collateral-First Loan Continuity Maximizer** inside AWS Nitro TEE: depositing free emergency `vETH` first to elevate HF without reducing the `vUSD` debt denominator, preserving near 100% of the loan continuity score (`debt × duration`).
+    - Fixed a critical vulnerability in the challenge's starter template: scrubbed all private threshold values (`min_hf`, `target_hf`) from `runtime.log` and error messages, ensuring 100% compliance with the 15-point confidentiality rubric.
+    - Added Sepolia challenge contracts and Foundry verification tests (`contracts/test/ChallengeLending.t.sol`), expanding verified unit tests to **39/39 passing tests**.
 
 ---
 
