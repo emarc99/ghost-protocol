@@ -7,12 +7,16 @@
   "scripts": {
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "simulate": "cre workflow simulate",
-    "deploy": "cre workflow deploy --network staging"
+    "status": "node --experimental-strip-types check_status.ts",
+    "join": "node --experimental-strip-types join_challenge.ts",
+    "approve": "node --experimental-strip-types approve_tokens.ts",
+    "simulate": "cre workflow simulate . -T staging-settings -e .env --trigger-index 0 --non-interactive",
+    "deploy": "cre workflow deploy . --target staging-settings"
   },
   "dependencies": {
     "@chainlink/cre-sdk": "^1.19.1",
-    "viem": "^2.56.3"
+    "viem": "^2.56.3",
+    "zod": "*"
   },
   "devDependencies": {
     "@types/node": "^20.14.0",

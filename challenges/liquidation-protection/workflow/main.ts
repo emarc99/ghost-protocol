@@ -1,25 +1,26 @@
-import { cre, type TeeRuntime } from "@chainlink/cre-sdk";
+import { Runner, cre, type TeeRuntime } from "@chainlink/cre-sdk";
 import { decodeFunctionResult, encodeFunctionData, type Address } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
+import { z } from "zod";
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+// ─── Config Schema (Chainlink CRE Standard) ───────────────────────────────────
 
-type SecretsConfig = {
-  private_key_id: string;
-  min_hf_trigger_id: string;
-  target_hf_id: string;
-  max_repay_pct_id: string;
-  max_deposit_units_id: string;
-};
+export const configSchema = z.object({
+  schedule: z.string(),
+  rpc_url: z.string(),
+  lending_address: z.string(),
+  veth_address: z.string(),
+  vusd_address: z.string(),
+  secrets_ids: z.object({
+    private_key_id: z.string(),
+    min_hf_trigger_id: z.string(),
+    target_hf_id: z.string(),
+    max_repay_pct_id: z.string(),
+    max_deposit_units_id: z.string(),
+  }),
+});
 
-export type Config = {
-  schedule: string;
-  rpc_url: string;
-  lending_address: string;
-  veth_address: string;
-  vusd_address: string;
-  secrets_ids: SecretsConfig;
-};
+export type Config = z.infer<typeof configSchema>;
 
 // ─── ABIs ─────────────────────────────────────────────────────────────────────
 
@@ -357,7 +358,11 @@ export const onCronTrigger = async (runtime: TeeRuntime<Config>): Promise<string
     ])
     .result();
 
-  const privateKey = secrets[secrets_ids.private_key_id].value as `0x${string}`;
+  let rawPk = asString(secrets[secrets_ids.private_key_id]?.value).trim().replace(/^["']|["']$/g, "");
+  if (!rawPk.startsWith("0x") && !rawPk.startsWith("0X")) {
+    rawPk = `0x${rawPk}`;
+  }
+  const privateKey = rawPk as `0x${string}`;
   const minHfTrigger = BigInt(secrets[secrets_ids.min_hf_trigger_id].value);
   const targetHf = BigInt(secrets[secrets_ids.target_hf_id].value);
   const maxRepayPct = BigInt(secrets[secrets_ids.max_repay_pct_id].value);
@@ -404,8 +409,10 @@ export const onCronTrigger = async (runtime: TeeRuntime<Config>): Promise<string
   let depositAmount = 0n;
   let repayAmount = 0n;
 
-  // Calculate collateral needed to restore HF to targetHf
-  const requiredCollateral = (targetHf * 100n * position.debt) / (vethPrice * LIQUI_THRESHOLD);
+  // Calculate collateral needed to restore HF to targetHf using ceiling division
+  // Ceiling division guarantees effective HF >= targetHf without needing any secondary debt repayment
+  const denom = vethPrice * LIQUI_THRESHOLD;
+  const requiredCollateral = (targetHf * 100n * position.debt + denom - 1n) / denom;
   const vethBalance = readBalance(runtime, client, rpc_url, veth_address, walletAddress);
 
   if (requiredCollateral > position.collateral && vethBalance > 0n) {
@@ -438,7 +445,9 @@ export const onCronTrigger = async (runtime: TeeRuntime<Config>): Promise<string
 
   // 6. Execute Optimized Defense Transactions
   let nonce = ethGetNonce(runtime, client, rpc_url, walletAddress);
-  const gasPrice = ethGasPrice(runtime, client, rpc_url);
+  const baseGasPrice = ethGasPrice(runtime, client, rpc_url);
+  // Priority bump of 25% ensures instant inclusion in the immediate next block ahead of liquidator bots
+  const gasPrice = (baseGasPrice * 125n) / 100n;
   const txHashes: string[] = [];
 
   // Step A: Collateral Deposit (Preserves Debt Denominator)
@@ -539,28 +548,6 @@ export const onCronTrigger = async (runtime: TeeRuntime<Config>): Promise<string
 // ─── Workflow Initialization ──────────────────────────────────────────────────
 
 export const initWorkflow = (config: Config) => {
-  if (
-    !config.schedule ||
-    !config.rpc_url ||
-    !config.lending_address ||
-    !config.veth_address ||
-    !config.vusd_address
-  ) {
-    throw new Error(
-      "config requires schedule, rpc_url, lending_address, veth_address, vusd_address",
-    );
-  }
-
-  if (
-    !config.secrets_ids?.private_key_id ||
-    !config.secrets_ids?.min_hf_trigger_id ||
-    !config.secrets_ids?.target_hf_id ||
-    !config.secrets_ids?.max_repay_pct_id ||
-    !config.secrets_ids?.max_deposit_units_id
-  ) {
-    throw new Error("config requires all secrets_ids fields");
-  }
-
   const cron = new cre.capabilities.CronCapability();
 
   return [
@@ -571,5 +558,12 @@ export const initWorkflow = (config: Config) => {
     ),
   ];
 };
+
+export async function main() {
+  const runner = await Runner.newRunner({ configSchema });
+  await runner.run(initWorkflow);
+}
+
+main();
 
 export default initWorkflow;
