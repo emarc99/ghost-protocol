@@ -118,15 +118,51 @@ In the official Chainlink CRE Confidential Bootcamp (Case Study 2: *Automated Li
 
 ---
 
-## Issue 6: [Feature Request] Offline Mode & Local Secret Injection Flag for CI/CD
+## Issue 7: [CLI / Monorepo DX] Project Root Discovery Silently Defaults to Git Root in Monorepos
 
 ### Context
-During hackathons and automated CI workflows, developers need to simulate confidential workflows locally (`cre workflow simulate`) without requiring an active interactive browser session (`--secrets-auth=browser`) or prior manual organization provisioning on `cre.chain.link`.
+In multi-workflow repositories or monorepos (e.g., a project containing a main protocol workflow in `cre-workflow/` and a secondary challenge workflow in `challenges/liquidation-protection/workflow/`).
 
-### Problem
-When automating tests in GitHub Actions or headless Docker containers, the requirement for browser auth or interactive login creates friction for automated regression suites.
+### Problem & DX Friction
+1. When a developer navigates into a nested workflow directory and runs:
+   ```bash
+   cre secrets create secrets.yaml --target staging-settings --secrets-auth=browser
+   ```
+2. The CRE CLI automatically searches upwards for `.git` and silently designates the repository root as `--project-root`.
+3. Consequently, the CLI attempts to read the *root* `secrets.yaml` and root `.env`, failing with obscure errors like:
+   ```
+   ✗ environment variable "STAGING_ENCLAVE_SIGNER_KEY" for secret "ENCLAVE_SIGNER_KEY" not found; please export it
+   ```
+   even though the local `secrets.yaml` and `.env` in the current working directory are fully populated!
+4. The developer must deduce through trial-and-error that `-R . -e .env` must be explicitly passed.
 
-### Suggested Improvement
-Add an explicit `--secrets-auth=env` or `--offline` flag to `cre workflow simulate` that strictly parses local `.env` and `secrets.yaml` without attempting any network handshake or token renewal with the CRE registry, enabling seamless CI/CD test automation.
+### Suggested Solution
+1. When `workflow.yaml` exists in the current working directory, default `--project-root` to `.` rather than traversing to `.git`.
+2. Or detect if multiple `secrets.yaml` exist in the path hierarchy and warn the user:
+   ```
+   ⚠️ Detected local secrets.yaml in ./secrets.yaml. Using local directory as project root (use -R to override).
+   ```
+
+---
+
+## Issue 8: [CLI / DX] Auto-Detect `--secrets-auth=browser` for Private Deployment Registries
+
+### Context
+When storing secrets in the Vault DON for a confidential workflow targeting a private registry (`deployment-registry: "private"` in `workflow.yaml`).
+
+### Problem & DX Friction
+1. `cre secrets create` defaults to `--secrets-auth=onchain` (which expects an on-chain smart contract transaction using wallet gas).
+2. For private workflows, however, `--secrets-auth=browser` is required to authenticate against the Vault DON gateway via OAuth session.
+3. If `--secrets-auth` is omitted, the CLI fails attempting on-chain execution, confusing developers who are building purely private TEE workflows.
+
+### Suggested Solution
+Since `workflow.yaml` already explicitly declares:
+```yaml
+user-workflow:
+  deployment-registry: "private"
+```
+The CRE CLI should automatically inspect the selected `--target` in `workflow.yaml`. If `deployment-registry` is `"private"`, it should automatically default `--secrets-auth` to `"browser"`.
+
+---
 
 
