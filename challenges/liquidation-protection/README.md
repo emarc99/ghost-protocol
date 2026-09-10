@@ -97,8 +97,15 @@ cre workflow simulate
 Upload the encrypted secrets to your private Chainlink Vault DON and deploy:
 ```bash
 cd challenges/liquidation-protection/workflow
-cre secrets set --network staging
-cre workflow deploy --network staging
+
+# 1. Authorize and store secrets in the Vault DON
+cre secrets create secrets.yaml --target staging-settings --secrets-auth=browser
+
+# 2. Verify secrets landed
+cre secrets list --target staging-settings --secrets-auth=browser
+
+# 3. Deploy workflow to Chainlink Private Registry
+cre workflow deploy . --target staging-settings
 ```
 
 ---
