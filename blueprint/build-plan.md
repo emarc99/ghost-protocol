@@ -22,9 +22,9 @@
 - [x] 13. **AI Assistance Proof Log (`AI_ASSISTANCE.md`)** - Document the anti-vibe-coding workflow, human-as-gatekeeper decisions, and ETHGlobal AI disclosures
 - [x] 14. **Sponsor GitHub Issues & Feedback Ledgers** - Create actionable upstream issue reports for Chainlink CRE, 1inch Aqua, The Graph, and Uniswap
 
-## Phase 3: Visual Demo & Live Integrations (Upcoming)
+## Phase 3: Visual Demo & Live Integrations (Completed)
 
-- [ ] 15. **Interactive Web Demo Dashboard** - Build rich dark-mode UI with live liquidity depth chart, CRE radar, and attack simulator
-- [ ] 16. **Live Subgraph MCP Integration** - Connect live Subgraph Studio endpoint into CRE workflow and frontend
-- [ ] 17. **Contract Build & Test Verification** - Compile contracts and run Foundry test suite
+- [x] 15. **Interactive Web Demo Dashboard** - Build rich dark-mode UI with live liquidity depth chart, CRE radar, attack simulator, and Next.js 16 Web3 terminal suite
+- [x] 16. **Live Subgraph MCP Integration** - Connect live Subgraph Studio endpoint into CRE workflow and frontend
+- [x] 17. **Contract Build & Test Verification** - Compile contracts and run Foundry test suite (36/36 tests passing, 5/5 Anvil live tests passing)
 - [ ] 18. **Final Submission Package** - Prepare 2-minute demo video script, architecture slides, and ETHGlobal submission entry
