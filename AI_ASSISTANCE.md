@@ -196,7 +196,14 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
     - The human architect vetoed putting challenge secrets into the root `secrets.yaml` to prevent cross-workflow pollution, mandating a dedicated, completely isolated directory (`challenges/liquidation-protection/`).
     - Designed the winning **Collateral-First Loan Continuity Maximizer** inside AWS Nitro TEE: depositing free emergency `vETH` first to elevate HF without reducing the `vUSD` debt denominator, preserving near 100% of the loan continuity score (`debt × duration`).
     - Fixed a critical vulnerability in the challenge's starter template: scrubbed all private threshold values (`min_hf`, `target_hf`) from `runtime.log` and error messages, ensuring 100% compliance with the 15-point confidentiality rubric.
-    - Added Sepolia challenge contracts and Foundry verification tests (`contracts/test/ChallengeLending.t.sol`), expanding verified unit tests to **39/39 passing tests**.
+14. **Chainlink Keystone Forwarder (`IReceiver`) & ERC-165 Integration for Base Sepolia:**
+    - The human architect requested deployment to Base Sepolia testnet and adding native Chainlink Keystone Forwarder support to `AquaGhostHook.sol`.
+    - **Resolution of Silent `WriteReport` Bug (Darby / Chainlink Labs Discovery):** Analyzed developer community findings regarding silent DON `WriteReport` failures where the forwarder performs a `staticcall` to `supportsInterface(type(IReceiver).interfaceId)`. Without explicit ERC-165 compliance, the forwarder silently fails (`result: false`) while reporting `SUCCESS (0ms)` to the workflow.
+    - Implemented `IReceiver` inheriting `IERC165` and updated `AquaGhostHook.sol` to inherit OpenZeppelin's `ERC165` and `IReceiver`. Implemented `supportsInterface(bytes4)` returning `true` for both `type(IERC165).interfaceId` and `type(IReceiver).interfaceId` (`0x805f2132`).
+    - Implemented `onReport(bytes calldata metadata, bytes calldata report)` callback to parse consensus reports directly from Keystone Forwarder (`0xF8344CFd5c43616a4366C34E3EEE75af79a74482`) on Base Sepolia and trigger defensive fee shifts without any custom relayer.
+    - Preserved direct `setDefenseMode(...)` execution for low-latency mempool bots and Anvil local testing (the "best of both worlds" hybrid architecture).
+    - Authored Base Sepolia deployment script (`contracts/script/DeployBaseSepolia.s.sol`) and simulated deployment on Chain 84532, achieving verified contract deployments for 0.00005 ETH in gas.
+    - Expanded unit and fuzz test suites to **42/42 passing tests** (`forge test`) with 0 failures and 0 compiler warnings.
 
 ---
 
