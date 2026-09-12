@@ -118,6 +118,54 @@ In the official Chainlink CRE Confidential Bootcamp (Case Study 2: *Automated Li
 
 ---
 
+## Issue 6: [EVM / Keystone Forwarder DX] Silent `WriteReport` SUCCESS when Receiver Contract Lacks ERC-165 (`supportsInterface`)
+
+### Context
+When a CRE Workflow with confidential in-TEE handlers writes on-chain reports via `evmClient.writeReport(donRuntime, { receiver, report, gasConfig })` targeting the official production Keystone Forwarder (`0xF8344CFd5c43616a4366C34E3EEE75af79a74482` on Base Sepolia / Ethereum Sepolia).
+
+### Problem & DX Friction
+1. **Simulation vs Production Divergence:**
+   - In `cre workflow simulate --broadcast`, the CLI broadcasts through `MockKeystoneForwarder` (`0x15fC6ae9…9F88` on Sepolia or `0x82300bd7...` on Base Sepolia). This simulation forwarder accepts reports directly without strictly asserting ERC-165 compliance.
+   - In deployed production on the DON, however, the real Keystone Forwarder performs an internal `staticcall` to `supportsInterface(type(IReceiver).interfaceId)` before delivering the report payload to `onReport(bytes,bytes)`.
+2. **Silent Failure & Deceptive Success Status:**
+   - If the developer's receiver contract does not inherit `ERC165` or implements only `onReport(...)` without returning `true` for `type(IReceiver).interfaceId` (`0x805f2132`), the Forwarder's `supportsInterface` staticcall reverts.
+   - The Forwarder swallows the revert, records `ReportProcessed(receiver, ..., result: false)`, and finishes the transaction.
+   - From the CRE workflow's perspective, `WriteReport` reports `SUCCESS` with duration 0ms and an empty txHash, leaving zero error message in `cre workflow execution events`.
+   - Developers spend hours believing the DON or write target is broken when the issue is simply a missing ERC-165 interface implementation.
+
+### Code Snippet & Canonical Fix
+Receiver contracts must explicitly inherit OpenZeppelin's `ERC165` and register `IReceiver`:
+
+```solidity
+import { IReceiver } from "./interfaces/IReceiver.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+
+contract AquaGhostHook is BaseHook, ERC165, IReceiver {
+    address public keystoneForwarder;
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IReceiver).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    function onReport(bytes calldata metadata, bytes calldata report) external override {
+        if (keystoneForwarder != address(0) && msg.sender != keystoneForwarder) {
+            revert UnauthorizedForwarder(msg.sender);
+        }
+        // Decode verified attestation and execute defense
+        (string memory action, , , uint24 feeBps, uint256 nonce, bytes memory signature) = 
+            abi.decode(report, (string, int24, int24, uint24, uint256, bytes));
+        _applyDefense(active, feeBps, nonce, signature);
+    }
+}
+```
+
+### Suggested Solution for Chainlink Labs
+1. **Align Simulation with Production:** Update `MockKeystoneForwarder` used in `cre workflow simulate` to enforce the exact same `supportsInterface` staticcall check as the production Forwarder, catching missing ERC-165 implementations immediately at development time.
+2. **Surfaced Diagnostics in CRE CLI:** In `cre workflow execution events --verbose`, if the forwarder emits `result: false` or if `txHash` is empty, surface an explicit warning: `⚠️ Forwarder staticcall supportsInterface failed on receiver <address>. Ensure receiver implements IERC165 and IReceiver.`
+3. **Documentation:** Add a prominent callout box in *Writing Data Onchain* and the *Forwarder Directory* highlighting that target contracts MUST inherit `ERC165` and support `IReceiver`.
+
+---
+
 ## Issue 7: [CLI / Monorepo DX] Project Root Discovery Silently Defaults to Git Root in Monorepos
 
 ### Context
