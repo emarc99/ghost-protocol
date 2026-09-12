@@ -1,6 +1,25 @@
 import { AppState } from "./types";
 
-export const CONTRACT_ADDRESSES = {
+export const BASE_SEPOLIA_ADDRESSES = {
+  chainId: 84532,
+  chainName: "Base Sepolia",
+  rpcUrl: "https://sepolia.base.org",
+  explorerUrl: "https://sepolia.basescan.org",
+  deployer: "0xb8AD2787f447e04E8D66D7e888Dd48fB68DdedB7",
+  enclaveSigner: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
+  keystoneForwarder: "0xF8344CFd5c43616a4366C34E3EEE75af79a74482",
+  contracts: {
+    WETH: "0x4200000000000000000000000000000000000006",
+    USDC: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+    AquaRouter: "0xf7fc7914811afe15d5f3d6804404bc9ee8977e9e",
+    UniswapPoolCaller: "0xb8AD2787f447e04E8D66D7e888Dd48fB68DdedB7",
+    AquaGhostApp: "0xb787c01c2fe1728a0d3e0fef51a787a8a55edb38",
+    AquaSwapVM: "0x29c03d8dea9e110c7d955c5722b03bb69c74b2e7",
+    AquaGhostHook: "0x47a927ff37d35ea227d023f8153cd541862de3b8"
+  }
+} as const;
+
+export const LOCAL_ANVIL_ADDRESSES = {
   chainId: 31337,
   rpcUrl: "http://127.0.0.1:8545",
   deployer: "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
@@ -16,12 +35,14 @@ export const CONTRACT_ADDRESSES = {
   }
 } as const;
 
+export const CONTRACT_ADDRESSES = BASE_SEPOLIA_ADDRESSES;
+
 export const DEFAULT_STATE: AppState = {
-  makerAddress: "0xA11CE88B0964177d56e9A381f8f3c7D1f4c58190",
+  makerAddress: "0xb8AD2787f447e04E8D66D7e888Dd48fB68DdedB7",
   enclaveAddress: "0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7",
-  aquaRouterAddress: "0xc351628EB244ec633d5f21fBD6621e1a683B1181",
-  poolManagerAddress: "0x000000000004444c5dc75cB358380D2e3dE08A90",
-  hookAddress: "0x1429859428C0aBc9C2C47C8Ee9FBaf82cFA0F20f",
+  aquaRouterAddress: "0xf7fc7914811afe15d5f3d6804404bc9ee8977e9e",
+  poolManagerAddress: "0xb8AD2787f447e04E8D66D7e888Dd48fB68DdedB7",
+  hookAddress: "0x47a927ff37d35ea227d023f8153cd541862de3b8",
   walletBalances: {
     WETH: 10.0,
     USDC: 25000.0,
