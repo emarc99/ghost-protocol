@@ -30,6 +30,7 @@ export interface HttpTriggerInput {
   riskThresholdBps?: number;
   maxSlippageBps?: number;
   forceDefensive?: boolean;
+  mempoolSurgeDelta?: string;
 }
 
 // ─── 3. Confidential In-Enclave Logic (AWS Nitro TEE) ──────────
@@ -79,9 +80,13 @@ export async function evaluateDefenseInsideEnclave(
   runtime.log(`Ingested live Subgraph state: Pool ${poolMetrics.poolId}, Tick: ${poolMetrics.tickCurrent}, TVL: $${poolMetrics.totalValueLockedUSD}`);
 
   // Step 3: Anomaly Heuristics & JIT Threat Assessment
+  const effectiveDelta = requestPayload?.mempoolSurgeDelta
+    ? Math.abs(Number(requestPayload.mempoolSurgeDelta))
+    : Math.abs(Number(poolMetrics.liquidityDelta));
+
   const isJitAttack =
     Boolean(requestPayload?.forceDefensive) ||
-    (Number(poolMetrics.liquidityDelta) > 10_000_000_000 &&
+    (effectiveDelta >= 10_000_000_000 &&
       poolMetrics.volatilityBps > riskThresholdBps);
 
   const decision: DefenseDecision = {
@@ -137,7 +142,18 @@ export async function evaluateDefenseInsideEnclave(
 
   donRuntime.log(`Workflow DON consensus reached for report: ${decision.action} [Trigger: ${triggerSource}]`);
 
-  return `AquaGhost Sentinel Verdict [${triggerSource}]: ${decision.action} (Fee: ${decision.feeBps} bps, Signature: ${signature.slice(0, 18)}...)`;
+  const attestationPayload = {
+    verdict: `AquaGhost Sentinel Verdict [${triggerSource}]: ${decision.action}`,
+    action: decision.action,
+    newTickLower: decision.newTickLower,
+    newTickUpper: decision.newTickUpper,
+    feeBps: decision.feeBps,
+    nonce: decision.nonce,
+    signature: signature,
+    signerAddress: account.address
+  };
+
+  return JSON.stringify(attestationPayload);
 }
 
 // ─── 4. Trigger Handlers (AWS Nitro TEE) ────────────────────────
