@@ -15,6 +15,8 @@ import { ModifyLiquidityParams, SwapParams } from "v4-core/src/types/PoolOperati
 import { BeforeSwapDelta, BeforeSwapDeltaLibrary } from "v4-core/src/types/BeforeSwapDelta.sol";
 import { MessageHashUtils } from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import { IReceiver } from "../src/interfaces/IReceiver.sol";
+import { IERC165 } from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 contract MockERC20 is ERC20 {
     constructor(string memory name, string memory symbol) ERC20(name, symbol) {
@@ -961,5 +963,54 @@ contract AquaGhostTest is Test {
             swapScript
         );
     }
+
+    // =========================================================================
+    // Chainlink KeystoneForwarder (IReceiver & ERC-165) Unit Tests
+    // =========================================================================
+
+    function test_Hook_SupportsInterface_IReceiver() public view {
+        assertTrue(aquaGhostHook.supportsInterface(type(IERC165).interfaceId)); // ERC165: 0x01ffc9a7
+        assertTrue(aquaGhostHook.supportsInterface(type(IReceiver).interfaceId)); // IReceiver: 0x805f2132
+        assertTrue(aquaGhostHook.supportsInterface(0x805f2132)); // Direct verification of onReport(bytes,bytes)
+        assertFalse(aquaGhostHook.supportsInterface(0xffffffff));
+    }
+
+    function test_Hook_OnReport_ValidForwarder() public {
+        address forwarder = aquaGhostHook.keystoneForwarder();
+        uint256 nonce = 777123;
+        uint24 targetFee = 250;
+
+        bytes32 messageHash = keccak256(
+            abi.encodePacked("TOGGLE_DEFENSE", true, targetFee, nonce)
+        ).toEthSignedMessageHash();
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(enclavePrivateKey, messageHash);
+        bytes memory signature = abi.encodePacked(r, s, v);
+
+        bytes memory report = abi.encode(
+            "DEFENSIVE_SHIFT",
+            int24(-201400),
+            int24(-201100),
+            targetFee,
+            nonce,
+            signature
+        );
+
+        vm.prank(forwarder);
+        aquaGhostHook.onReport("workflow-metadata-0056", report);
+
+        assertTrue(aquaGhostHook.defenseModeActive());
+        assertEq(aquaGhostHook.dynamicFeeBps(), targetFee);
+        assertEq(aquaGhostHook.lastNonce(), nonce);
+    }
+
+    function test_Hook_OnReport_RevertUnauthorizedForwarder() public {
+        address unauthorized = address(0xDEADBEEF);
+        bytes memory report = abi.encode("DEFENSIVE_SHIFT", int24(0), int24(0), uint24(250), uint256(1), "0x");
+
+        vm.expectRevert(abi.encodeWithSignature("UnauthorizedForwarder(address)", unauthorized));
+        vm.prank(unauthorized);
+        aquaGhostHook.onReport("metadata", report);
+    }
 }
+
 
