@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { TheGraphClient } from "./graphClient.ts";
+import { TheGraphClient } from "./graphClient";
 
 // Initialize The Graph client using environment settings or default gateway
 const GRAPH_GATEWAY_URL = process.env.GRAPH_GATEWAY_URL || "https://gateway.thegraph.com/api/public/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV";

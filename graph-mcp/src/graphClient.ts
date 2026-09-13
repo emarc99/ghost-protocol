@@ -1,4 +1,4 @@
-import type { PoolSnapshot, TickLiquidity, JitThreatAnalysis } from "./types.ts";
+import type { PoolSnapshot, TickLiquidity, JitThreatAnalysis } from "./types";
 
 export class TheGraphClient {
   private endpoint: string;
@@ -135,7 +135,7 @@ export class TheGraphClient {
     const deltaNumber = Number(mempoolSurgeDelta);
 
     const parsedLiquidity = BigInt(snapshot.liquidity || "0");
-    if (parsedLiquidity === 0n) {
+    if (parsedLiquidity === BigInt(0)) {
       throw new Error(`Pool ${poolId} has zero active liquidity on The Graph; cannot evaluate JIT risk.`);
     }
     const poolLiquidity = Number(snapshot.liquidity.slice(0, 15)) || 1;

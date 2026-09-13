@@ -1,7 +1,7 @@
 /**
  * Verification test for The Graph Subgraph MCP Server Tools.
  */
-import { TheGraphClient } from "./graphClient.ts";
+import { TheGraphClient } from "./graphClient";
 
 async function runMcpToolTests() {
   console.log("===============================================================");
