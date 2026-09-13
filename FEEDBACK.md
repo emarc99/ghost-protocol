@@ -96,6 +96,16 @@ Synthesizing these insights with our engineering experience building AquaGhost's
 - **The DX Friction:** Angela emphasized that Uniswap strongly recommends Permit2 for all token approvals. For hooks that enforce custom access control or defensive capital movements, passing Permit2 signatures through `hookData` requires custom packing and manual verification inside each hook.
 - **Recommendation:** Provide canonical helper libraries within `@uniswap/v4-periphery` for standard Permit2 witness verification inside `beforeSwap` and `beforeAddLiquidity`. This gives developers an out-of-the-box standard for gasless approvals and atomic user authorization without reinventing custom signature packing.
 
+### 5.4 Routing Layer Compatibility & Avoiding the "Unroutable Pool" Trap
+- **The DX Friction & Common Trap:** As Angela Ocando noted during hackathon technical discussions, if a security or attestation hook requires authorization to be passed inside `hookData` during `beforeSwap()`, **the Uniswap Routing API and Universal Router cannot generate it**. This makes the pool unroutable to the broader ecosystem, restricting swaps exclusively to bespoke routers or proprietary frontends.
+- **AquaGhost Architectural Solution (Asynchronous Sentinel Decoupling):** Rather than forcing swappers to produce hardware attestations in `hookData` on every trade, AquaGhost completely decouples threat detection from the user execution path:
+  1. The Chainlink CRE AWS Nitro Enclave updates the defense posture **asynchronously** via `setDefenseMode(active, newFeeBps, nonce, signature)`.
+  2. Standard swappers routed through Uniswap Universal Router, 1inch, CowSwap, or the Uniswap Web App call `swap()` without requiring any custom `hookData`.
+  3. Inside `beforeSwap()`, the hook reads the verified on-chain defense mode and dynamically applies `dynamicFeeBps` (e.g. stepping from 30 BPS to 250 BPS during toxic volatility) while keeping the transaction fully compatible with standard routing.
+  4. Predatory 0-block JIT snipers attempting to wrap victim swaps are intercepted and reverted in `beforeAddLiquidity()` via `revert SniperAttackBlocked()`.
+- **Result:** AquaGhost-defended Uniswap v4 pools remain **100% publicly routable** with zero friction or custom calldata required from retail users or aggregators.
+- **Recommendation:** Add a dedicated pattern guide in the official Uniswap v4 documentation highlighting this *Asynchronous Sentinel Decoupling* pattern as the canonical architecture for security and anti-MEV hooks that wish to retain universal routing compatibility.
+
 ---
 
 ## 6. Summary Matrix & Overall Rating
