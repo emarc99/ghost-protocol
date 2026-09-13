@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { PanelHeader } from "@/components/PanelHeader";
 import { RadarView } from "@/components/RadarView";
 import { TerminalLog } from "@/components/TerminalLog";
+import { GraphStatsPanel } from "@/components/GraphStatsPanel";
 import { useAquaGhostStore } from "@/lib/store";
 import { soundFX } from "@/lib/sound";
 import {
@@ -368,11 +369,14 @@ export default function SentinelPage() {
         </section>
       </div>
 
+      {/* Decentralized Subgraph Liquidity Depth & JIT Threat Gauge */}
+      <GraphStatsPanel />
+
       {/* Attestation & Execution Stream */}
       <div style={{ marginTop: "14px" }}>
         <section className="panel">
           <PanelHeader
-            index="02.C"
+            index="02.D"
             title="CHAINLINK CRE // NITRO ENCLAVE LOG STREAM"
             tag="MONITORING"
             tagType="default"
