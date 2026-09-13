@@ -1,4 +1,8 @@
-import type { PoolSnapshot, TickLiquidity, JitThreatAnalysis } from "./types";
+import type {
+  PoolSnapshot,
+  TickLiquidity,
+  JitThreatAnalysis
+} from "./types.ts";
 
 export class TheGraphClient {
   private endpoint: string;
