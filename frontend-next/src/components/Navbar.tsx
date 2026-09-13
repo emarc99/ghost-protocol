@@ -31,6 +31,10 @@ export function Navbar() {
     { href: "/firewall", label: "HOOK FIREWALL", index: "03", icon: Shield }
   ];
 
+  if (pathname === "/deck") {
+    return null;
+  }
+
   return (
     <header>
       <div className="topbar">
