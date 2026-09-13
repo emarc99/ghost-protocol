@@ -109,7 +109,8 @@ export const DEFAULT_STATE: AppState = {
     dynamicFeeBps: 30,
     totalAttacksBlocked: 14,
     lastBlockedAttacker: "0xBAD000000000000000000000000000000000B07"
-  }
+  },
+  lastTx: null
 };
 
 export const ERC20_ABI = [

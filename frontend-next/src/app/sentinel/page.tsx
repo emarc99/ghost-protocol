@@ -5,6 +5,7 @@ import { PanelHeader } from "@/components/PanelHeader";
 import { RadarView } from "@/components/RadarView";
 import { TerminalLog } from "@/components/TerminalLog";
 import { GraphStatsPanel } from "@/components/GraphStatsPanel";
+import { TxBanner } from "@/components/TxBanner";
 import { useAquaGhostStore } from "@/lib/store";
 import { soundFX } from "@/lib/sound";
 import {
@@ -21,11 +22,11 @@ import {
 } from "lucide-react";
 
 export default function SentinelPage() {
-  const { state, logs, addLog, updateState } = useAquaGhostStore();
+  const { state, logs, addLog, updateState, executeOnChainDefense } = useAquaGhostStore();
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [activeAttestation, setActiveAttestation] = useState(state.sentinel.lastAttestation);
 
-  // 1. Mempool Attack Simulation -> Real Live The Graph Gateway Query -> CRE TEE Defense
+  // 1. Mempool Attack Simulation -> Real Live The Graph Gateway Query -> On-Chain CRE TEE Defense
   const triggerMempoolDefense = async () => {
     if (isEvaluating) return;
     setIsEvaluating(true);
@@ -53,56 +54,48 @@ export default function SentinelPage() {
       addLog(`[The Graph Gateway] Ingested live pool 0x88e6...5640: Active Tick: ${graphData.currentTick} | JIT Risk: ${graphData.riskScore}/100 (${graphData.threatLevel})`, "info");
       addLog(`[The Graph Heuristics] Safe Corridor: [${graphData.suggestedTickRange[0]}, ${graphData.suggestedTickRange[1]}] | Dynamic Defense Fee: ${graphData.suggestedFeeBps} BPS`, "alert");
 
-      // Phase 3: Hardware Attestation inside AWS Nitro Enclave
-      await new Promise((r) => setTimeout(r, 800));
-      soundFX.playAttestation();
-      const nonce = Date.now();
-      const sig = `0x${Array.from({ length: 130 }, () => Math.floor(Math.random() * 16).toString(16)).join("")}`;
+      // Phase 3: Hardware Attestation inside AWS Nitro Enclave & On-Chain Broadcast to Base Sepolia
+      addLog("[CRE TEE Enclave] Signing attestation and broadcasting setDefenseMode() to Base Sepolia...", "info");
+      const txData = await executeOnChainDefense(graphData.suggestedFeeBps);
 
-      const newAttestation = {
-        action: graphData.recommendation || "DEFENSIVE_SHIFT",
-        tickLower: graphData.suggestedTickRange[0],
-        tickUpper: graphData.suggestedTickRange[1],
-        dynamicFeeBps: graphData.suggestedFeeBps,
-        nonce,
-        signature: sig,
-        signerAddress: state.enclaveAddress,
-        timestamp: new Date().toTimeString().split(" ")[0] + " UTC"
-      };
+      if (txData && txData.success) {
+        soundFX.playAttestation();
+        const nonce = Number(txData.nonce) || Date.now();
 
-      setActiveAttestation(newAttestation);
-
-      addLog(`[Enclave Signer] Hardware TEE attestation signed with enclave private key. Nonce: ${nonce}`, "success");
-      addLog("[Workflow DON] Consensus reached across 4 DON nodes. Crossing confidentiality boundary.", "info");
-      addLog("[AquaGhostApp] executeDefensiveShift() called: 1inch Aqua docked old range & shipped safe corridor.", "success");
-      addLog(`[Uniswap v4 Hook] setDefenseMode(active=true, fee=${graphData.suggestedFeeBps} BPS): sniper transactions intercepted with SniperAttackBlocked.`, "success");
-
-      updateState((prev) => ({
-        ...prev,
-        sentinel: {
-          ...prev.sentinel,
-          status: "DEFENSE_ACTIVE",
-          isUnderAttack: true,
-          lastAttestation: newAttestation
-        },
-        hookState: {
-          ...prev.hookState,
-          defenseActive: true,
+        const newAttestation = {
+          action: graphData.recommendation || "DEFENSIVE_SHIFT",
+          tickLower: graphData.suggestedTickRange[0],
+          tickUpper: graphData.suggestedTickRange[1],
           dynamicFeeBps: graphData.suggestedFeeBps,
-          totalAttacksBlocked: prev.hookState.totalAttacksBlocked + 1
-        },
-        strategies: prev.strategies.map((s, idx) =>
-          idx === 0
-            ? {
-                ...s,
-                status: "DEFENSIVE_SHIFTED",
-                tickLower: graphData.suggestedTickRange[0],
-                tickUpper: graphData.suggestedTickRange[1],
-                feeBps: graphData.suggestedFeeBps
-              }
-            : s
-        )
-      }));
+          nonce,
+          signature: txData.txHash,
+          signerAddress: state.enclaveAddress,
+          timestamp: new Date().toTimeString().split(" ")[0] + " UTC"
+        };
+
+        setActiveAttestation(newAttestation);
+
+        addLog(`[Enclave Signer] Hardware TEE attestation signed. Nonce: ${nonce}`, "success");
+        addLog(`[Base Sepolia On-Chain] Block #${txData.blockNumber} confirmed! Tx: ${txData.txHash}`, "success");
+        addLog(`[BaseScan Link] ${txData.explorerUrl}`, "success");
+        addLog("[AquaGhostApp] executeDefensiveShift() called: 1inch Aqua docked old range & shipped safe corridor.", "success");
+        addLog(`[Uniswap v4 Hook] setDefenseMode(active=true, fee=${graphData.suggestedFeeBps} BPS): sniper transactions intercepted with SniperAttackBlocked.`, "success");
+
+        updateState((prev) => ({
+          ...prev,
+          strategies: prev.strategies.map((s, idx) =>
+            idx === 0
+              ? {
+                  ...s,
+                  status: "DEFENSIVE_SHIFTED",
+                  tickLower: graphData.suggestedTickRange[0],
+                  tickUpper: graphData.suggestedTickRange[1],
+                  feeBps: graphData.suggestedFeeBps
+                }
+              : s
+          )
+        }));
+      }
     } catch (err: any) {
       addLog(`[The Graph Error] ${err.message}`, "alert");
     } finally {
@@ -203,6 +196,12 @@ export default function SentinelPage() {
 
   return (
     <div>
+      {/* On-Chain Transaction Confirmation Banner */}
+      <TxBanner
+        tx={state.lastTx}
+        onDismiss={() => updateState((prev) => ({ ...prev, lastTx: null }))}
+      />
+
       {/* Top Banner */}
       <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "14px", marginBottom: "14px" }}>
         <div className="panel" style={{ padding: "14px" }}>

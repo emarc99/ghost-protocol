@@ -222,6 +222,14 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
       - Keystone Forwarder: [`0xF8344CFd5c43616a4366C34E3EEE75af79a74482`](https://sepolia.basescan.org/address/0xF8344CFd5c43616a4366C34E3EEE75af79a74482)
       - Protocol Deployer & Maker EOA: [`0xb8AD2787f447e04E8D66D7e888Dd48fB68DdedB7`](https://sepolia.basescan.org/address/0xb8AD2787f447e04E8D66D7e888Dd48fB68DdedB7)
     - **Infrastructure Topology Harmonization:** Replaced mock server ping metrics in [RadarView.tsx](file:///frontend-next/src/components/RadarView.tsx) with truthful, live-verified telemetry indicators (DON Quorum, Keystone Forwarder on Base Sepolia, AWS Nitro PCR0 Sealed, The Graph Decentralized Gateway).
+17. **Live On-Chain Transaction Dispatcher & BaseScan Explorer Integration:**
+    - **Viem Server-Side Dispatcher (`/api/tx`):** Created a live transaction broadcast endpoint in Next.js using `viem` configured for Base Sepolia (Chain ID `84532`). Transactions are funded and broadcasted by the protocol deployer (`0xb8AD2787f447e04E8D66D7e888Dd48fB68DdedB7`).
+    - **On-Chain 1inch Aqua Swap Fill:** Connected "SIMULATE SWAP FILL (ON-CHAIN)" to broadcast `MockAquaRouter.ship(...)` on Base Sepolia, executing real state transitions and generating verifiable on-chain logs.
+    - **On-Chain Nitro TEE Attested Defense Mode:** Connected "SIMULATE MEV THREAT" and "TRIGGER MEV SNIPER ATTACK" to sign EIP-191 cryptographic attestations with the hardware enclave signer (`0xe05fcC23807536bEe418f142D19fa0d21BB0cfF7`) and broadcast `AquaGhostHook.setDefenseMode(...)` directly on Base Sepolia.
+    - **Cyberpunk `<TxBanner />` & BaseScan Verification:** Designed a live HUD confirmation banner displaying confirmed block numbers, transaction hashes, and direct clickable links to BaseScan Sepolia Explorer. Verified with confirmed transactions:
+      - Swap Fill Tx: [`0xbdeaa0354e350a855b16bac7dc38a9497e767c5cfe2fba28ce0da1e488e988f4`](https://sepolia.basescan.org/tx/0xbdeaa0354e350a855b16bac7dc38a9497e767c5cfe2fba28ce0da1e488e988f4) (Block 46770426)
+      - Defense Mode Attestation Tx: [`0xa6c95d88c2f03e3d91cb7c8d95736b3a65a66a9ea5beb06e95e8c66ee73bdc77`](https://sepolia.basescan.org/tx/0xa6c95d88c2f03e3d91cb7c8d95736b3a65a66a9ea5beb06e95e8c66ee73bdc77) (Block 46770435)
+      - Interactive Browser Verification Tx: [`0xa71b6f78515e53db745e9b26c68ebc10116183cb18b4f4c94e120173ca59d3f1`](https://sepolia.basescan.org/tx/0xa71b6f78515e53db745e9b26c68ebc10116183cb18b4f4c94e120173ca59d3f1) (Block 46770752)
 
 ---
 

@@ -5,6 +5,7 @@ import { PanelHeader } from "@/components/PanelHeader";
 import { DepthChart } from "@/components/DepthChart";
 import { AttackSimulator } from "@/components/AttackSimulator";
 import { TerminalLog } from "@/components/TerminalLog";
+import { TxBanner } from "@/components/TxBanner";
 import { useAquaGhostStore } from "@/lib/store";
 import { soundFX } from "@/lib/sound";
 import { CONTRACT_ADDRESSES } from "@/lib/constants";
@@ -21,9 +22,10 @@ import {
 } from "lucide-react";
 
 export default function FirewallPage() {
-  const { state, logs, addLog, updateState, toggleDefenseOverride } = useAquaGhostStore();
+  const { state, logs, addLog, updateState, toggleDefenseOverride, executeOnChainDefense } = useAquaGhostStore();
   const [isSimulatingSniper, setIsSimulatingSniper] = useState(false);
   const [showRevertBanner, setShowRevertBanner] = useState(false);
+  const [isTogglingOnChain, setIsTogglingOnChain] = useState(false);
 
   const isDefenseActive = state.hookState.defenseActive;
   const currentFee = state.hookState.dynamicFeeBps;
@@ -81,8 +83,24 @@ export default function FirewallPage() {
     }, 800);
   };
 
+  const handleToggleClick = async () => {
+    if (isTogglingOnChain) return;
+    setIsTogglingOnChain(true);
+    try {
+      await toggleDefenseOverride();
+    } finally {
+      setIsTogglingOnChain(false);
+    }
+  };
+
   return (
     <div>
+      {/* On-Chain Transaction Confirmation Banner */}
+      <TxBanner
+        tx={state.lastTx}
+        onDismiss={() => updateState((prev) => ({ ...prev, lastTx: null }))}
+      />
+
       {/* Top Banner */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "14px", marginBottom: "14px" }}>
         <div className="panel" style={{ padding: "14px" }}>
@@ -157,11 +175,16 @@ export default function FirewallPage() {
               </div>
             </div>
             <button
-              onClick={toggleDefenseOverride}
+              onClick={handleToggleClick}
+              disabled={isTogglingOnChain}
               className={`btn-cyber ${isDefenseActive ? "danger" : ""}`}
               style={{ fontSize: "10px", padding: "8px 14px" }}
             >
-              {isDefenseActive ? "DISARM DEFENSE OVERRIDE" : "ENGAGE DEFENSE OVERRIDE"}
+              {isTogglingOnChain
+                ? "BROADCASTING TO BASE SEPOLIA..."
+                : isDefenseActive
+                ? "DISARM DEFENSE OVERRIDE"
+                : "ENGAGE DEFENSE OVERRIDE"}
             </button>
           </div>
         </section>
