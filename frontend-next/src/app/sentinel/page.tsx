@@ -226,12 +226,20 @@ export default function SentinelPage() {
         </div>
 
         <div className="panel" style={{ padding: "14px" }}>
-          <div className="eyebrow">DON CONSENSUS & SIGNER</div>
+          <div className="eyebrow">KEYSTONE FORWARDER // BASE SEPOLIA</div>
           <div style={{ fontSize: "16px", fontWeight: "500", color: "#edf9f7", margin: "6px 0 2px" }}>
-            4 / 4 Nodes Active
+            4 / 4 DON Quorum
           </div>
           <div style={{ fontSize: "9px", color: "var(--cyan)" }}>
-            Secp256k1 Attestation Verifier
+            <a
+              href="https://sepolia.basescan.org/address/0xF8344CFd5c43616a4366C34E3EEE75af79a74482"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--cyan)", textDecoration: "none" }}
+              title="View Keystone Forwarder on BaseScan"
+            >
+              Forwarder: 0xF834...4482 ↗
+            </a>
           </div>
         </div>
       </div>
@@ -348,7 +356,15 @@ export default function SentinelPage() {
             <div>
               <span className="metric-label">ENCLAVE SIGNER ADDRESS</span>
               <div style={{ fontSize: "10px", fontFamily: "monospace", color: "var(--cyan)", wordBreak: "break-all", marginTop: "2px" }}>
-                {activeAttestation?.signerAddress}
+                <a
+                  href={`https://sepolia.basescan.org/address/${activeAttestation?.signerAddress}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ color: "var(--cyan)", textDecoration: "none" }}
+                  title="View Enclave Signer on BaseScan"
+                >
+                  {activeAttestation?.signerAddress} ↗
+                </a>
               </div>
             </div>
 

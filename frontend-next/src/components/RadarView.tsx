@@ -52,20 +52,28 @@ export function RadarView({
 
         <div style={{ borderTop: "1px solid var(--border-subtle)", marginTop: "6px", paddingTop: "8px", display: "flex", flexDirection: "column", gap: "6px", fontSize: "9px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-muted)" }}>
-            <span>DON-01 [AWS-US-EAST]</span>
-            <b style={{ color: "var(--cyan)", fontWeight: 400 }}>99.98% / TEE VALIDATED</b>
+            <span>CHAINLINK CRE DON QUORUM</span>
+            <b style={{ color: "var(--cyan)", fontWeight: 400 }}>4 / 4 NODES CONSENSUS</b>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-muted)" }}>
-            <span>DON-02 [AWS-EU-CENTRAL]</span>
-            <b style={{ color: "var(--cyan)", fontWeight: 400 }}>99.99% / TEE VALIDATED</b>
+            <span>KEYSTONE FORWARDER (BASE SEPOLIA)</span>
+            <a
+              href="https://sepolia.basescan.org/address/0xF8344CFd5c43616a4366C34E3EEE75af79a74482"
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--emerald)", fontWeight: 400, textDecoration: "none" }}
+              title="View Keystone Forwarder on BaseScan"
+            >
+              0xF834...4482 ↗
+            </a>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-muted)" }}>
-            <span>DON-03 [GCP-US-WEST]</span>
-            <b style={{ color: "var(--cyan)", fontWeight: 400 }}>100.0% / TEE VALIDATED</b>
+            <span>ENCLAVE ISOLATION</span>
+            <b style={{ color: "var(--cyan)", fontWeight: 400 }}>AWS NITRO PCR0 SEALED</b>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", color: "var(--text-muted)" }}>
-            <span>DON-04 [EQUINIX-METAL]</span>
-            <b style={{ color: "var(--cyan)", fontWeight: 400 }}>99.97% / TEE VALIDATED</b>
+            <span>THE GRAPH DECENTRALIZED GATEWAY</span>
+            <b style={{ color: "var(--emerald)", fontWeight: 400 }}>ZERO MOCKS // CONNECTED</b>
           </div>
         </div>
       </div>

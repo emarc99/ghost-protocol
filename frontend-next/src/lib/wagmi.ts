@@ -2,7 +2,7 @@
 
 import { getDefaultConfig } from "@rainbow-me/rainbowkit";
 import { defineChain } from "viem";
-import { sepolia } from "viem/chains";
+import { baseSepolia, sepolia } from "viem/chains";
 
 export const anvilLocalhost = defineChain({
   id: 31337,
@@ -23,6 +23,6 @@ export const anvilLocalhost = defineChain({
 export const wagmiConfig = getDefaultConfig({
   appName: "AquaGhost Protocol",
   projectId: "9c0c16fb3b29d4991206129188049102", // WalletConnect public demo project ID
-  chains: [anvilLocalhost, sepolia],
+  chains: [baseSepolia, anvilLocalhost, sepolia],
   ssr: true
 });

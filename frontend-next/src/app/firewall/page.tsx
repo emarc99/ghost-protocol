@@ -7,6 +7,7 @@ import { AttackSimulator } from "@/components/AttackSimulator";
 import { TerminalLog } from "@/components/TerminalLog";
 import { useAquaGhostStore } from "@/lib/store";
 import { soundFX } from "@/lib/sound";
+import { CONTRACT_ADDRESSES } from "@/lib/constants";
 import {
   Shield,
   ShieldAlert,
@@ -90,7 +91,15 @@ export default function FirewallPage() {
             {isDefenseActive ? "ARMED (SURGE DEFENSE)" : "STANDBY MONITORING"}
           </div>
           <div style={{ fontSize: "9px", color: "var(--text-muted)" }}>
-            Hook: 0x1429859428C0aBc9C2C47C8Ee9FBaf82cFA0F20f
+            <a
+              href={`https://sepolia.basescan.org/address/${CONTRACT_ADDRESSES.contracts.AquaGhostHook}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--cyan)", textDecoration: "none" }}
+              title="View AquaGhostHook on BaseScan"
+            >
+              Hook: {CONTRACT_ADDRESSES.contracts.AquaGhostHook.slice(0, 10)}...{CONTRACT_ADDRESSES.contracts.AquaGhostHook.slice(-6)} ↗
+            </a>
           </div>
         </div>
 

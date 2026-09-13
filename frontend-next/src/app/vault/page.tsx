@@ -104,10 +104,18 @@ export default function VaultPage() {
         <div className="panel" style={{ padding: "14px" }}>
           <div className="eyebrow">MAKER WALLET ADDRESS</div>
           <div style={{ fontSize: "14px", fontWeight: "500", color: "var(--cyan)", margin: "8px 0 4px", fontFamily: "monospace" }}>
-            {state.makerAddress.slice(0, 8)}...{state.makerAddress.slice(-6)}
+            <a
+              href={`https://sepolia.basescan.org/address/${state.makerAddress}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--cyan)", textDecoration: "none" }}
+              title="View on BaseScan"
+            >
+              {state.makerAddress.slice(0, 8)}...{state.makerAddress.slice(-6)} ↗
+            </a>
           </div>
-          <div style={{ fontSize: "9px", color: "var(--text-muted)" }}>
-            Anvil Node Account #0 (EOA)
+          <div style={{ fontSize: "9px", color: "var(--emerald)" }}>
+            Base Sepolia Deployer (EOA)
           </div>
         </div>
       </div>
