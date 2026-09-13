@@ -212,6 +212,16 @@ Three quintessential demonstrations of the AI Blueprint philosophy occurred duri
       - **JIT Threat Gauge & Dynamic Fee Dial:** Heuristic risk score gauge (0-100), threat status badge, and dynamic defense fee recommendation (30 to 250 BPS).
       - **Interactive Flash-Loan Surge Slider:** Interactive control allowing operators and hackathon judges to simulate flash-loan attacks from $0M to $30M and watch the risk score and fee recommendations recalculate dynamically.
     - **Automated Verification:** Verified live rendering, slider reactivity, and gateway syncing via browser subagent and confirmed clean Next.js production build (`npm run build:next`).
+16. **Frontend Full Deployed Actuals Migration (Base Sepolia & Zero Mock Infrastructure):**
+    - **Wagmi & RainbowKit Defaulting to Base Sepolia:** Transitioned web3 provider config in [wagmi.ts](file:///frontend-next/src/lib/wagmi.ts) to prioritize **Base Sepolia (Chain ID `84532`)** where protocol contracts were broadcasted and verified at block `46765260`.
+    - **Dynamic Network & Real Block Header:** Replaced the hardcoded Anvil string in [Navbar.tsx](file:///frontend-next/src/components/Navbar.tsx) with a dynamic chain badge (`BASE SEPOLIA : 84532`) reading live on-chain block numbers from the network (`BLK #46767535`) with direct BaseScan navigation.
+    - **Live Decentralized Subgraph Depth Chart:** Upgraded [DepthChart.tsx](file:///frontend-next/src/components/DepthChart.tsx) from static arrays to real-time tick liquidity queries via The Graph Network Decentralized Gateway (`/api/graph?action=ticks&limit=14`), dynamically computing spot price (`$2,475.78 USDC/WETH`) and tick distributions.
+    - **BaseScan Verified Contract Deep Links:** Linked all deployed contract entities across `/vault`, `/firewall`, and `/sentinel` to their verified Base Sepolia addresses:
+      - `AquaGhostHook`: [`0x47a927ff37d35ea227d023f8153cd541862de3b8`](https://sepolia.basescan.org/address/0x47a927ff37d35ea227d023f8153cd541862de3b8)
+      - `AquaGhostApp`: [`0xb787c01c2fe1728a0d3e0fef51a787a8a55edb38`](https://sepolia.basescan.org/address/0xb787c01c2fe1728a0d3e0fef51a787a8a55edb38)
+      - Keystone Forwarder: [`0xF8344CFd5c43616a4366C34E3EEE75af79a74482`](https://sepolia.basescan.org/address/0xF8344CFd5c43616a4366C34E3EEE75af79a74482)
+      - Protocol Deployer & Maker EOA: [`0xb8AD2787f447e04E8D66D7e888Dd48fB68DdedB7`](https://sepolia.basescan.org/address/0xb8AD2787f447e04E8D66D7e888Dd48fB68DdedB7)
+    - **Infrastructure Topology Harmonization:** Replaced mock server ping metrics in [RadarView.tsx](file:///frontend-next/src/components/RadarView.tsx) with truthful, live-verified telemetry indicators (DON Quorum, Keystone Forwarder on Base Sepolia, AWS Nitro PCR0 Sealed, The Graph Decentralized Gateway).
 
 ---
 
