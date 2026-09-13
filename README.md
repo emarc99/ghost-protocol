@@ -6,7 +6,7 @@
 
 **Hardware-Isolated Autonomous Liquidity Defense & JIT Protection Protocol**
 
-[![Foundry Tests](https://img.shields.io/badge/Foundry-36%2F36%20Passing-emerald?style=flat-square&logo=ethereum)](contracts/test)
+[![Foundry Tests](https://img.shields.io/badge/Foundry-42%2F42%20Passing-emerald?style=flat-square&logo=ethereum)](contracts/test)
 [![Chainlink CRE](https://img.shields.io/badge/Chainlink_CRE-AWS_Nitro_Enclave-blue?style=flat-square&logo=chainlink)](cre-workflow/)
 [![1inch Aqua](https://img.shields.io/badge/1inch-Aqua_SwapVM-darkblue?style=flat-square)](contracts/src/swapvm/AquaSwapVM.sol)
 [![Uniswap v4](https://img.shields.io/badge/Uniswap_v4-Hook_Firewall-pink?style=flat-square&logo=uniswap)](contracts/src/AquaGhostHook.sol)
@@ -85,6 +85,11 @@ To provide judges with verifiable proof rather than theoretical claims, AquaGhos
 | **AquaSwapVM** | `0x29c03d8dea9e110c7d955c5722b03bb69c74b2e7` | [Basescan](https://sepolia.basescan.org/address/0x29c03d8dea9e110c7d955c5722b03bb69c74b2e7) | Bytecode execution engine with `OP_TEE_GUARD` (`0x7E`) and `OP_DYNAMIC_FEE` (`0xDF`) |
 | **MockAquaRouter** | `0xf7fc7914811afe15d5f3d6804404bc9ee8977e9e` | [Basescan](https://sepolia.basescan.org/address/0xf7fc7914811afe15d5f3d6804404bc9ee8977e9e) | 1inch Aqua Liquidity Router with `dock()` and `ship()` primitives |
 | **Keystone Forwarder** | `0xF8344CFd5c43616a4366C34E3EEE75af79a74482` | [Basescan](https://sepolia.basescan.org/address/0xF8344CFd5c43616a4366C34E3EEE75af79a74482) | Official Chainlink Keystone Forwarder delivering verified DON reports to hook |
+
+### Confirmed Live On-Chain Transaction Proofs
+* **1inch Aqua Swap Fill Simulation:** [`0xbdeaa0354e350a855b16bac7dc38a9497e767c5cfe2fba28ce0da1e488e988f4`](https://sepolia.basescan.org/tx/0xbdeaa0354e350a855b16bac7dc38a9497e767c5cfe2fba28ce0da1e488e988f4) (Block 46770426)
+* **Nitro TEE Attested Defense Mode Activation:** [`0xa6c95d88c2f03e3d91cb7c8d95736b3a65a66a9ea5beb06e95e8c66ee73bdc77`](https://sepolia.basescan.org/tx/0xa6c95d88c2f03e3d91cb7c8d95736b3a65a66a9ea5beb06e95e8c66ee73bdc77) (Block 46770435)
+* **Interactive UI Verification via Browser Subagent:** [`0xa71b6f78515e53db745e9b26c68ebc10116183cb18b4f4c94e120173ca59d3f1`](https://sepolia.basescan.org/tx/0xa71b6f78515e53db745e9b26c68ebc10116183cb18b4f4c94e120173ca59d3f1) (Block 46770752)
 
 ---
 
@@ -238,11 +243,14 @@ ghost-protocol/
 ├── docs/                             # Hackathon Documentation & Evidence
 │   ├── assets/                       # Banners, logos, and UI screenshots
 │   ├── sponsor-issues/               # Ready-to-file upstream GitHub issues for sponsor SDKs
+│   ├── SLIDES.md                     # 8-slide architecture pitch deck for hackathon judges
 │   ├── DEMO_SCRIPT.md                # 2-minute video presentation & judging evaluation script
+│   ├── EMPIRICAL_BENCHMARK_REPORT.md # 1,000-block backtest & mathematical proof
 │   └── SUBMISSION.md                 # Complete ETHGlobal submission copy
 ├── AI_ASSISTANCE.md                  # Comprehensive AI Blueprint disclosure & atomic commit log
 ├── FEEDBACK.md                       # Deep-dive feedback for Uniswap Foundation bounty
 └── scripts/
+    ├── backtest_empirical_defense.ts # 1,000-block empirical 4-pillar backtest suite
     ├── simulate_jit_attack.ts        # Multi-strategy shared balance attack simulation
     └── test_live_anvil_integration.ts # Automated on-chain end-to-end test runner
 ```
@@ -263,27 +271,20 @@ forge install
 forge test -vvv
 ```
 
-### 2. Verify Live Decentralized Data from The Graph
+### 2. Run 1,000-Block Empirical Defense Backtest
 ```bash
-# In the project root:
-npm install
-npm run test:mcp
+npm run backtest
 ```
 
-### 3. Run Live On-Chain Anvil Integration Test
+### 3. Verify Live Decentralized Data from The Graph
 ```bash
-# In terminal 1 (start local Anvil testnet node):
-anvil --port 8545 --chain-id 31337
-
-# In terminal 2 (deploy contracts and execute real on-chain defense):
-npm run test:live
+npm run test:mcp
 ```
 
 ### 4. Launch Next.js 16 Cyberpunk Terminal Suite
 ```bash
-# In the project root:
-npm run dev:next
-# Open http://localhost:3000 in your browser
+npm run dev
+# Open http://localhost:3001 in your browser
 ```
 
 ---
@@ -293,7 +294,7 @@ npm run dev:next
 In accordance with our AI Blueprint and the hackathon's upstream contribution ethos, we authored detailed, actionable bug reports and feature recommendations:
 
 - **Chainlink CRE SDK & Enclaves:** [`docs/sponsor-issues/CHAINLINK_CRE_ISSUES.md`](docs/sponsor-issues/CHAINLINK_CRE_ISSUES.md) (6 structured issues including WASM sandbox fetch limitations, multi-trigger typing, and staging CLI flags)
-- **1inch Aqua:** [`docs/sponsor-issues/ONEINCH_AQUA_FEEDBACK.md`](docs/sponsor-issues/ONEINCH_AQUA_FEEDBACK.md) (4 structured issues covering shared balance simulation harnesses, SwapVM opcode standardization, and multi-asset slippage)
+- **1inch Aqua:** [`docs/sponsor-issues/ONEINCH_AQUA_FEEDBACK.md`](docs/sponsor-issues/ONEINCH_AQUA_FEEDBACK.md) (5 structured issues covering shared balance simulation harnesses, SwapVM opcode standardization, and multi-asset slippage)
 - **The Graph Subgraph MCP:** [`docs/sponsor-issues/THE_GRAPH_MCP_FEEDBACK.md`](docs/sponsor-issues/THE_GRAPH_MCP_FEEDBACK.md) (3 structured issues on streaming MCP transport, cursor pagination, and error normalization)
 - **Uniswap Foundation:** [`FEEDBACK.md`](FEEDBACK.md) (Comprehensive review of v4 hook developer experience, FairFlow telemetry, and transient storage patterns)
 
