@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { TheGraphClient } from "@/lib/graphClient";
+import { TheGraphClient } from "@graph-mcp/graphClient";
 
 const DEFAULT_POOL = "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"; // Ethereum Mainnet USDC/WETH 0.05%
 

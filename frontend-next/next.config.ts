@@ -1,9 +1,10 @@
 import type { NextConfig } from "next";
+import path from "path";
 
 const nextConfig: NextConfig = {
   serverExternalPackages: ["pino-pretty", "lokijs", "encoding"],
   turbopack: {
-    root: "c:/Users/LENOVO/Documents/devposts/ghost/frontend-next"
+    root: path.resolve(__dirname, "..")
   }
 };
 
