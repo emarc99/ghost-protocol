@@ -5,7 +5,7 @@ import { AppState, Strategy } from "./types";
 import { DEFAULT_STATE } from "./constants";
 import { soundFX } from "./sound";
 
-const STORAGE_KEY = "aquaghost_state_v2";
+const STORAGE_KEY = "aquaghost_state_v3";
 
 export function useAquaGhostStore() {
   const [state, setState] = useState<AppState>(DEFAULT_STATE);
