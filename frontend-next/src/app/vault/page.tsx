@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { PanelHeader } from "@/components/PanelHeader";
 import { TerminalLog } from "@/components/TerminalLog";
+import { TxBanner } from "@/components/TxBanner";
 import { useAquaGhostStore } from "@/lib/store";
 import { soundFX } from "@/lib/sound";
 import {
@@ -21,12 +22,14 @@ export default function VaultPage() {
     state,
     logs,
     addLog,
+    updateState,
     dockStrategy,
     shipStrategy,
     simulateSwapperFill
   } = useAquaGhostStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSwapping, setIsSwapping] = useState(false);
   const [newStratName, setNewStratName] = useState("");
   const [newStratPair, setNewStratPair] = useState("WETH / USDC");
   const [newStratApp, setNewStratApp] = useState("1inch Aqua Constant Product");
@@ -60,8 +63,24 @@ export default function VaultPage() {
     setNewStratName("");
   };
 
+  const handleSwapFillClick = async () => {
+    if (isSwapping) return;
+    setIsSwapping(true);
+    try {
+      await simulateSwapperFill();
+    } finally {
+      setIsSwapping(false);
+    }
+  };
+
   return (
     <div>
+      {/* On-Chain Transaction Confirmation Banner */}
+      <TxBanner
+        tx={state.lastTx}
+        onDismiss={() => updateState((prev) => ({ ...prev, lastTx: null }))}
+      />
+
       {/* Top Banner Stats */}
       <div
         style={{
@@ -104,10 +123,18 @@ export default function VaultPage() {
         <div className="panel" style={{ padding: "14px" }}>
           <div className="eyebrow">MAKER WALLET ADDRESS</div>
           <div style={{ fontSize: "14px", fontWeight: "500", color: "var(--cyan)", margin: "8px 0 4px", fontFamily: "monospace" }}>
-            {state.makerAddress.slice(0, 8)}...{state.makerAddress.slice(-6)}
+            <a
+              href={`https://sepolia.basescan.org/address/${state.makerAddress}`}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: "var(--cyan)", textDecoration: "none" }}
+              title="View on BaseScan"
+            >
+              {state.makerAddress.slice(0, 8)}...{state.makerAddress.slice(-6)} ↗
+            </a>
           </div>
-          <div style={{ fontSize: "9px", color: "var(--text-muted)" }}>
-            Anvil Node Account #0 (EOA)
+          <div style={{ fontSize: "9px", color: "var(--emerald)" }}>
+            Base Sepolia Deployer (EOA)
           </div>
         </div>
       </div>
@@ -121,12 +148,13 @@ export default function VaultPage() {
             <h2>1INCH AQUA // ACTIVE STRATEGIES</h2>
             <div style={{ marginLeft: "auto", display: "flex", gap: "8px" }}>
               <button
-                onClick={simulateSwapperFill}
+                onClick={handleSwapFillClick}
+                disabled={isSwapping}
                 className="btn-cyber"
                 style={{ fontSize: "9px", padding: "4px 8px" }}
               >
                 <Zap size={11} />
-                <span>SIMULATE FILL (+2.5K USDC)</span>
+                <span>{isSwapping ? "SETTLING ON BASE SEPOLIA..." : "SIMULATE FILL (+2.5K USDC)"}</span>
               </button>
               <button
                 onClick={() => setIsModalOpen(true)}

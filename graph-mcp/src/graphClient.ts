@@ -1,4 +1,8 @@
-import type { PoolSnapshot, TickLiquidity, JitThreatAnalysis } from "./types.ts";
+import type {
+  PoolSnapshot,
+  TickLiquidity,
+  JitThreatAnalysis
+} from "./types.ts";
 
 export class TheGraphClient {
   private endpoint: string;
@@ -135,17 +139,28 @@ export class TheGraphClient {
     const deltaNumber = Number(mempoolSurgeDelta);
 
     const parsedLiquidity = BigInt(snapshot.liquidity || "0");
-    if (parsedLiquidity === 0n) {
+    if (parsedLiquidity === BigInt(0)) {
       throw new Error(`Pool ${poolId} has zero active liquidity on The Graph; cannot evaluate JIT risk.`);
     }
     const poolLiquidity = Number(snapshot.liquidity.slice(0, 15)) || 1;
-
-    // A JIT attack is flagged when incoming 0-block liquidity delta exceeds 25% of active pool depth
     const ratio = deltaNumber / poolLiquidity;
-    const threatDetected = ratio > 0.25 || deltaNumber > 10_000_000_000;
 
-    const riskScore = threatDetected ? Math.min(100, Math.round(ratio * 70 + 30)) : 12;
-    const threatLevel = riskScore >= 75 ? "CRITICAL" : riskScore >= 40 ? "ELEVATED" : "LOW";
+    // In concentrated liquidity AMMs, pool liquidity L has high integer precision.
+    // If incoming mempool flash-loan delta is >= $10M (or 10B nominal units), it represents an unequivocal predatory sandwich.
+    const isCriticalSurge = deltaNumber >= 10_000_000_000 || ratio > 0.25;
+    const isElevatedSurge = deltaNumber >= 2_000_000_000 || ratio > 0.05;
+    const threatDetected = isCriticalSurge || isElevatedSurge;
+
+    const riskScore = isCriticalSurge
+      ? Math.min(100, Math.round(85 + Math.min(15, (deltaNumber / 30_000_000_000) * 15)))
+      : isElevatedSurge
+        ? 55
+        : threatDetected
+          ? 45
+          : 12;
+
+    const threatLevel: "LOW" | "ELEVATED" | "CRITICAL" =
+      riskScore >= 75 ? "CRITICAL" : riskScore >= 40 ? "ELEVATED" : "LOW";
 
     let recommendation: "HOLD" | "DEFENSIVE_SHIFT" | "MAX_FEE_DEFENSE" = "HOLD";
     let suggestedFeeBps = 30; // standard 0.30%

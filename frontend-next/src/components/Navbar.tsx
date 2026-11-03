@@ -10,7 +10,7 @@ import { soundFX } from "@/lib/sound";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const { data: blockNumber } = useBlockNumber({ watch: true });
   const [timeStr, setTimeStr] = useState("00:00:00 UTC");
 
@@ -30,6 +30,10 @@ export function Navbar() {
     { href: "/sentinel", label: "NITRO SENTINEL", index: "02", icon: Radio },
     { href: "/firewall", label: "HOOK FIREWALL", index: "03", icon: Shield }
   ];
+
+  if (pathname === "/deck") {
+    return null;
+  }
 
   return (
     <header>
@@ -66,10 +70,17 @@ export function Navbar() {
 
         {/* Status Meta & Wallet */}
         <div className="topbar-meta">
-          <div className="block-meta">
+          <a
+            href={chain?.id === 84532 || !chain ? "https://sepolia.basescan.org" : "#"}
+            target="_blank"
+            rel="noreferrer"
+            className="block-meta"
+            style={{ textDecoration: "none", cursor: "pointer" }}
+            title="Active Network // Base Sepolia Testnet"
+          >
             <span className="live-dot" />
-            <span>LOCAL ANVIL : 31337</span>
-          </div>
+            <span>{chain ? `${chain.name.toUpperCase()} : ${chain.id}` : "BASE SEPOLIA : 84532"}</span>
+          </a>
 
           <div className="block-meta">
             BLK <span>#{blockNumber ? blockNumber.toString() : "194028"}</span>

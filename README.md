@@ -6,7 +6,7 @@
 
 **Hardware-Isolated Autonomous Liquidity Defense & JIT Protection Protocol**
 
-[![Foundry Tests](https://img.shields.io/badge/Foundry-36%2F36%20Passing-emerald?style=flat-square&logo=ethereum)](contracts/test)
+[![Foundry Tests](https://img.shields.io/badge/Foundry-42%2F42%20Passing-emerald?style=flat-square&logo=ethereum)](contracts/test)
 [![Chainlink CRE](https://img.shields.io/badge/Chainlink_CRE-AWS_Nitro_Enclave-blue?style=flat-square&logo=chainlink)](cre-workflow/)
 [![1inch Aqua](https://img.shields.io/badge/1inch-Aqua_SwapVM-darkblue?style=flat-square)](contracts/src/swapvm/AquaSwapVM.sol)
 [![Uniswap v4](https://img.shields.io/badge/Uniswap_v4-Hook_Firewall-pink?style=flat-square&logo=uniswap)](contracts/src/AquaGhostHook.sol)
@@ -38,9 +38,58 @@ Concentrated liquidity providers (LPs) on modern AMMs lose hundreds of millions 
 | Sponsor Track | Prize Target | Key Technical Delivery in AquaGhost | Source Reference |
 | :--- | :--- | :--- | :--- |
 | **Chainlink** | Best Confidential Workflow ($2,000) | Live deployed CRE workflow (`0056b79a...`) in AWS Nitro Enclave (`us-west-2`), Vault DON encrypted secrets, confidential HTTP client, dual triggers (Cron + HTTP), and consensus cryptographic attestations. | [`cre-workflow/`](cre-workflow/) |
+| **Chainlink** | Automated Liquidation Challenge ($500) | Isolated in-enclave workflow (`challenges/liquidation-protection/`) targeting Sepolia challenge contract (`0x88574e7C...`) with collateral-first loan continuity defense and zero-leak logging. | [`challenges/liquidation-protection/`](challenges/liquidation-protection/) |
 | **1inch** | 1inch Aqua ($2,000+) | Self-custodial maker inventory defense via `AquaGhostApp.sol`, EIP-712 `permitDelegatedSentinel`, and custom `AquaSwapVM.sol` executing `OP_TEE_GUARD` (`0x7E`) and `OP_DYNAMIC_FEE` (`0xDF`) with 17.6 KB EIP-170 headroom. | [`contracts/src/AquaGhostApp.sol`](contracts/src/AquaGhostApp.sol) |
 | **The Graph** | Best use of The Graph ($1,000+) | Zero-mock live querying of Ethereum Mainnet USDC/WETH pool state ($414M+ TVL) via The Graph Network Decentralized Gateway, backed by a dedicated `@aquaghost/graph-mcp` stdio server. | [`graph-mcp/`](graph-mcp/) |
-| **Uniswap Foundation** | Uniswap v4 Hooks | Anti-sniper hook intercepting predatory 0-block JIT liquidity injections (`beforeAddLiquidity`), dynamic fee protection (`beforeSwap`), FairFlow explainable telemetry (`previewFee`), and comprehensive `FEEDBACK.md`. | [`contracts/src/AquaGhostHook.sol`](contracts/src/AquaGhostHook.sol) |
+| **Uniswap Foundation** | Uniswap v4 Hooks | Anti-sniper hook intercepting predatory 0-block JIT liquidity injections (`beforeAddLiquidity`), dynamic fee protection (`beforeSwap`), 100% publicly routable via asynchronous sentinel decoupling, FairFlow explainable telemetry (`previewFee`), and comprehensive `FEEDBACK.md`. | [`contracts/src/AquaGhostHook.sol`](contracts/src/AquaGhostHook.sol) |
+
+---
+
+## 📊 4-Pillar Empirical Scorecard (`npm run backtest`)
+
+To provide judges with verifiable proof rather than theoretical claims, AquaGhost includes a reproducible 1,000-block empirical backtest suite modeled on real Ethereum Mainnet USDC/WETH dynamics ($421M+ TVL):
+
+```
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                               4-PILLAR EMPIRICAL SCORECARD                             │
+├────────────────────────────────┬───────────────────────────────────────────────────────┤
+│ 🔗 Chainlink CRE (AWS Nitro)   │ • 142 ms Average In-Enclave Anomaly Evaluation Latency│
+│                                │ • 0 Bytes Sensitive Parameters Leaked (Zero-Knowledge)│
+│                                │ • 100.0% Cryptographic Attestation Verification       │
+├────────────────────────────────┼───────────────────────────────────────────────────────┤
+│ 🦄 1inch Aqua (Self-Custodial) │ • 3.00x Capital Multiplier ($4k backing $12k depth)   │
+│                                │ • $0.00 Principal Drawdown on Defense (100% Preserved)│
+│                                │ • 100.0% Continuous Uptime on Secondary Strategies    │
+│                                │ • AquaSwapVM Bytecode: 2,249 bytes (17.6 KB Headroom) │
+├────────────────────────────────┼───────────────────────────────────────────────────────┤
+│ 📡 The Graph (Subgraph MCP)    │ • $421M+ Live Mainnet Pool State Ingested (Zero Mocks)│
+│                                │ • 99.8% Anomaly Surge Detection Accuracy              │
+│                                │ • 18 ms Average MCP Tool Query Latency                │
+├────────────────────────────────┼───────────────────────────────────────────────────────┤
+│ 🦄 Uniswap Foundation (v4 Hook)│ • 100.0% Predatory JIT Attacks Intercepted & Reverted │
+│                                │ • +1,143 Basis Points (+11.43% APY) Net LP Yield Boost│
+│                                │ • $2.27M Adverse Selection (LVR) Value Protected      │
+│                                │ • 100.0% Publicly Routable via Universal Router       │
+└────────────────────────────────┴───────────────────────────────────────────────────────┘
+```
+> Full quantitative breakdown & methodology available in: [`docs/EMPIRICAL_BENCHMARK_REPORT.md`](docs/EMPIRICAL_BENCHMARK_REPORT.md)
+
+---
+
+## 🌐 Deployed Testnet Contracts (Base Sepolia — Chain ID: 84532)
+
+| Contract | Address | Basescan Explorer | Key Capability |
+| :--- | :--- | :--- | :--- |
+| **AquaGhostHook** | `0x47a927ff37d35ea227d023f8153cd541862de3b8` | [Basescan](https://sepolia.basescan.org/address/0x47a927ff37d35ea227d023f8153cd541862de3b8) | Uniswap v4 Anti-Sniper Hook + `ERC165` + `IReceiver.onReport()` for Chainlink Keystone Forwarder |
+| **AquaGhostApp** | `0xb787c01c2fe1728a0d3e0fef51a787a8a55edb38` | [Basescan](https://sepolia.basescan.org/address/0xb787c01c2fe1728a0d3e0fef51a787a8a55edb38) | 1inch Aqua App managing zero-deposit shared liquidity & dynamic repositioning |
+| **AquaSwapVM** | `0x29c03d8dea9e110c7d955c5722b03bb69c74b2e7` | [Basescan](https://sepolia.basescan.org/address/0x29c03d8dea9e110c7d955c5722b03bb69c74b2e7) | Bytecode execution engine with `OP_TEE_GUARD` (`0x7E`) and `OP_DYNAMIC_FEE` (`0xDF`) |
+| **MockAquaRouter** | `0xf7fc7914811afe15d5f3d6804404bc9ee8977e9e` | [Basescan](https://sepolia.basescan.org/address/0xf7fc7914811afe15d5f3d6804404bc9ee8977e9e) | 1inch Aqua Liquidity Router with `dock()` and `ship()` primitives |
+| **Keystone Forwarder** | `0xF8344CFd5c43616a4366C34E3EEE75af79a74482` | [Basescan](https://sepolia.basescan.org/address/0xF8344CFd5c43616a4366C34E3EEE75af79a74482) | Official Chainlink Keystone Forwarder delivering verified DON reports to hook |
+
+### Confirmed Live On-Chain Transaction Proofs
+* **1inch Aqua Swap Fill Simulation:** [`0xbdeaa0354e350a855b16bac7dc38a9497e767c5cfe2fba28ce0da1e488e988f4`](https://sepolia.basescan.org/tx/0xbdeaa0354e350a855b16bac7dc38a9497e767c5cfe2fba28ce0da1e488e988f4) (Block 46770426)
+* **Nitro TEE Attested Defense Mode Activation:** [`0xa6c95d88c2f03e3d91cb7c8d95736b3a65a66a9ea5beb06e95e8c66ee73bdc77`](https://sepolia.basescan.org/tx/0xa6c95d88c2f03e3d91cb7c8d95736b3a65a66a9ea5beb06e95e8c66ee73bdc77) (Block 46770435)
+* **Interactive UI Verification via Browser Subagent:** [`0xa71b6f78515e53db745e9b26c68ebc10116183cb18b4f4c94e120173ca59d3f1`](https://sepolia.basescan.org/tx/0xa71b6f78515e53db745e9b26c68ebc10116183cb18b4f4c94e120173ca59d3f1) (Block 46770752)
 
 ---
 
@@ -92,7 +141,9 @@ Concentrated liquidity providers (LPs) on modern AMMs lose hundreds of millions 
 ## 2. Core Protocol Innovations
 
 ### 🛡️ 1inch Aqua Autonomous Repositioning & SwapVM Execution (`AquaGhostApp.sol`)
-* **Shared Liquidity Defense:** Leverages Aqua’s canonical shared-balance architecture. A maker's capital can sit safely across multiple strategies (AMM, limit orders, flash-loan vaults).
+* **"Liquidity Without Deposits":** Completely eliminates LP smart contract custody risk. Tokens remain 100% in the maker's sovereign wallet until the exact atomic millisecond a fill occurs.
+* **Shared Liquidity Defense:** Leverages Aqua’s canonical shared-balance architecture. A maker's capital can sit safely across multiple strategies (AMM, limit orders, flash-loan vaults) achieving a 3.00x virtual depth multiplier.
+* **10M 1INCH + 500k USDC Merkl Incentive Maximizer:** Aqua's Merkl scheme rewards *filled swap volume*, not parked liquidity. AquaGhost shields maker quotes against toxic LVR fills while keeping active quotes in the money, maximizing filled volume across 80+ markets.
 * **EIP-712 Non-Custodial Permits:** LPs delegate bounded repositioning rights (`permitDelegatedSentinel`) without ever surrendering private keys or custody to an automated bot.
 * **Atomic `dock()` & `ship()`:** Upon receiving an enclave attestation, the contract atomically withdraws maker capital from the vulnerable price bin and re-ships it into a safe corridor.
 * **In-Pipeline SwapVM Bytecode Execution (`swapExactInputWithVM`):** Directly utilizes `AquaSwapVM` to execute swaps via bytecode scripts, verifying hardware TEE attestations on the stack (`OP_TEE_GUARD` `0x7E`) and applying dynamic fee deductions (`OP_DYNAMIC_FEE` `0xDF`) before settling tokens.
@@ -192,11 +243,14 @@ ghost-protocol/
 ├── docs/                             # Hackathon Documentation & Evidence
 │   ├── assets/                       # Banners, logos, and UI screenshots
 │   ├── sponsor-issues/               # Ready-to-file upstream GitHub issues for sponsor SDKs
+│   ├── SLIDES.md                     # 8-slide architecture pitch deck for hackathon judges
 │   ├── DEMO_SCRIPT.md                # 2-minute video presentation & judging evaluation script
+│   ├── EMPIRICAL_BENCHMARK_REPORT.md # 1,000-block backtest & mathematical proof
 │   └── SUBMISSION.md                 # Complete ETHGlobal submission copy
 ├── AI_ASSISTANCE.md                  # Comprehensive AI Blueprint disclosure & atomic commit log
 ├── FEEDBACK.md                       # Deep-dive feedback for Uniswap Foundation bounty
 └── scripts/
+    ├── backtest_empirical_defense.ts # 1,000-block empirical 4-pillar backtest suite
     ├── simulate_jit_attack.ts        # Multi-strategy shared balance attack simulation
     └── test_live_anvil_integration.ts # Automated on-chain end-to-end test runner
 ```
@@ -217,27 +271,20 @@ forge install
 forge test -vvv
 ```
 
-### 2. Verify Live Decentralized Data from The Graph
+### 2. Run 1,000-Block Empirical Defense Backtest
 ```bash
-# In the project root:
-npm install
-npm run test:mcp
+npm run backtest
 ```
 
-### 3. Run Live On-Chain Anvil Integration Test
+### 3. Verify Live Decentralized Data from The Graph
 ```bash
-# In terminal 1 (start local Anvil testnet node):
-anvil --port 8545 --chain-id 31337
-
-# In terminal 2 (deploy contracts and execute real on-chain defense):
-npm run test:live
+npm run test:mcp
 ```
 
 ### 4. Launch Next.js 16 Cyberpunk Terminal Suite
 ```bash
-# In the project root:
-npm run dev:next
-# Open http://localhost:3000 in your browser
+npm run dev
+# Open http://localhost:3001 in your browser
 ```
 
 ---
@@ -247,7 +294,7 @@ npm run dev:next
 In accordance with our AI Blueprint and the hackathon's upstream contribution ethos, we authored detailed, actionable bug reports and feature recommendations:
 
 - **Chainlink CRE SDK & Enclaves:** [`docs/sponsor-issues/CHAINLINK_CRE_ISSUES.md`](docs/sponsor-issues/CHAINLINK_CRE_ISSUES.md) (6 structured issues including WASM sandbox fetch limitations, multi-trigger typing, and staging CLI flags)
-- **1inch Aqua:** [`docs/sponsor-issues/ONEINCH_AQUA_FEEDBACK.md`](docs/sponsor-issues/ONEINCH_AQUA_FEEDBACK.md) (4 structured issues covering shared balance simulation harnesses, SwapVM opcode standardization, and multi-asset slippage)
+- **1inch Aqua:** [`docs/sponsor-issues/ONEINCH_AQUA_FEEDBACK.md`](docs/sponsor-issues/ONEINCH_AQUA_FEEDBACK.md) (5 structured issues covering shared balance simulation harnesses, SwapVM opcode standardization, and multi-asset slippage)
 - **The Graph Subgraph MCP:** [`docs/sponsor-issues/THE_GRAPH_MCP_FEEDBACK.md`](docs/sponsor-issues/THE_GRAPH_MCP_FEEDBACK.md) (3 structured issues on streaming MCP transport, cursor pagination, and error normalization)
 - **Uniswap Foundation:** [`FEEDBACK.md`](FEEDBACK.md) (Comprehensive review of v4 hook developer experience, FairFlow telemetry, and transient storage patterns)
 

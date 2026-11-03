@@ -50,6 +50,15 @@ export interface WalletBalances {
   USDT: number;
 }
 
+export interface OnChainTx {
+  txHash: string;
+  blockNumber: number;
+  explorerUrl: string;
+  action: string;
+  summary: string;
+  timestamp: string;
+}
+
 export interface AppState {
   makerAddress: string;
   enclaveAddress: string;
@@ -60,4 +69,5 @@ export interface AppState {
   strategies: Strategy[];
   sentinel: SentinelState;
   hookState: HookState;
+  lastTx?: OnChainTx | null;
 }

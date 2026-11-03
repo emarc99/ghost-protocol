@@ -7,9 +7,10 @@ import { RadarView } from "@/components/RadarView";
 import { DepthChart } from "@/components/DepthChart";
 import { AttackSimulator } from "@/components/AttackSimulator";
 import { TerminalLog } from "@/components/TerminalLog";
+import { TxBanner } from "@/components/TxBanner";
 import { useAquaGhostStore } from "@/lib/store";
 import { soundFX } from "@/lib/sound";
-import { Shield, Radio, Layers, ArrowUpRight, CheckCircle2, Zap, Play } from "lucide-react";
+import { Shield, Radio, Layers, ArrowUpRight, CheckCircle2, Zap, Play, Loader2 } from "lucide-react";
 
 export default function MissionControlPage() {
   const {
@@ -19,10 +20,12 @@ export default function MissionControlPage() {
     updateState,
     dockStrategy,
     simulateSwapperFill,
-    toggleDefenseOverride
+    toggleDefenseOverride,
+    executeOnChainDefense
   } = useAquaGhostStore();
 
   const [sniperSimActive, setSniperSimActive] = useState(false);
+  const [isSwapping, setIsSwapping] = useState(false);
 
   // Total physical and effective liquidity
   const physicalCapital =
@@ -36,32 +39,39 @@ export default function MissionControlPage() {
     0
   );
 
-  const handleAttackTriggered = () => {
+  const handleAttackTriggered = async () => {
     setSniperSimActive(true);
     addLog(
-      "[Firewall] REVERT TRIGGERED: AquaGhostHook.SniperAttackBlocked(0xBAD0...0B07, poolId)",
+      "[Threat Sentinel] Predatory JIT sniper detected in mempool: 0xBAD0...0B07. Initiating Base Sepolia defense...",
       "alert"
     );
-    addLog(
-      "[Result] 15,000,000 flash loan rejected. Zero fees drained. Honest LP positions safe!",
-      "success"
-    );
 
-    updateState((prev) => ({
-      ...prev,
-      hookState: {
-        ...prev.hookState,
-        totalAttacksBlocked: prev.hookState.totalAttacksBlocked + 1
-      }
-    }));
+    // Broadcast actual on-chain defense mode to Base Sepolia
+    await executeOnChainDefense(250);
 
     setTimeout(() => {
       setSniperSimActive(false);
     }, 4000);
   };
 
+  const handleSwapFillClick = async () => {
+    if (isSwapping) return;
+    setIsSwapping(true);
+    try {
+      await simulateSwapperFill();
+    } finally {
+      setIsSwapping(false);
+    }
+  };
+
   return (
     <div>
+      {/* On-Chain Transaction Confirmation Banner */}
+      <TxBanner
+        tx={state.lastTx}
+        onDismiss={() => updateState((prev) => ({ ...prev, lastTx: null }))}
+      />
+
       {/* 3-Panel Main Dashboard Grid */}
       <div className="dashboard-grid">
         {/* PANEL A: 1inch Aqua JIT Liquidity */}
@@ -336,12 +346,13 @@ export default function MissionControlPage() {
 
           <div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid var(--border-subtle)", display: "flex", gap: "10px" }}>
             <button
-              onClick={simulateSwapperFill}
+              onClick={handleSwapFillClick}
+              disabled={isSwapping}
               className="btn-cyber"
               style={{ flex: 1, fontSize: "9px" }}
             >
               <Zap size={11} />
-              <span>SIMULATE SWAP FILL</span>
+              <span>{isSwapping ? "SETTLING ON BASE SEPOLIA..." : "SIMULATE SWAP FILL (ON-CHAIN)"}</span>
             </button>
           </div>
         </section>

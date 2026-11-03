@@ -89,4 +89,21 @@ Refactor SwapVM's execution engine using a **Modular Opcode Registry** (e.g., vi
 ### AquaGhost Implementation Proof
 In AquaGhost Protocol, we validated this modular approach by building `AquaSwapVM.sol` as a lean, dedicated 139-line execution engine (2,249 bytes runtime size, only 9% of EIP-170 limit) and connecting it directly to `AquaGhostApp.sol` (6,938 bytes runtime size, 28% of limit). By introducing `OP_TEE_GUARD` (`0x7E`) and `OP_DYNAMIC_FEE` (`0xDF`) and linking it into `swapExactInputWithVM()`, we achieved in-bytecode hardware security with over 17.6 KB of contract size headroom remaining.
 
+---
+
+## 6. Issue 5: [Incentives & Routing] Telemetry Hooks for Merkl Active-Volume Quoting Optimization
+
+### Context
+1inch Network recently launched a **10 Million 1INCH + 500k USDC incentive campaign** for Aqua via Merkl across 80+ markets (pairing 1INCH with ETH/LSTs, Stablecoins, BTC wrappers, DeFi majors, and RWAs). Unlike conventional AMM liquidity mining that rewards idle deposits, Aqua's Merkl scheme rewards **actual filled swap volume**, recalculated every 8 hours on-chain.
+
+### Problem & DX Friction
+While Aqua's shared liquidity paradigm allows a single wallet balance to quote across dozens of incentivized pairs simultaneously without capital fragmentation, makers face a quantitative dilemma:
+1. **LVR Drag on Stale Quotes:** In volatile market regimes, toxic arbitrageurs exploit stale quotes across thinly monitored incentivized pairs before makers can adjust pricing. The resulting adverse selection losses frequently erase the Merkl fee and token rewards.
+2. **Lack of Fill Probability Telemetry:** Makers have no standardized telemetry from 1inch Pathfinder or Resolvers indicating which of the 80+ pairs are currently experiencing high retail demand versus toxic mempool arbitrage. Without this, autonomous sentinels cannot dynamically re-weight shared liquidity allocations.
+
+### Suggested Improvement
+1. **Resolver Telemetry Stream:** Provide an off-chain API or lightweight WebSocket feed emitting aggregate quote hit-rates and resolver fill latencies across the 80+ incentivized pairs.
+2. **Dynamic Repositioning Primitives:** Encourage the use of autonomous sentinel contracts (such as AquaGhost) that monitor mempool volatility via oracles and dynamically invoke `aqua.dock()` and `aqua.ship()` to shift shared balances into high-volume, low-threat reward corridors while widening spreads or pausing quotes during toxic spikes.
+
+
 

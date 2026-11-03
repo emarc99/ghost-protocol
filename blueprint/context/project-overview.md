@@ -1,5 +1,7 @@
 # AquaGhost Protocol - Project Overview
 
+<!-- blueprint:source-hash 972ae277af07481d9f8ee5394f8522474a33e8078686a3f282dff91d9b8785fe -->
+
 > Hardware-isolated sentinel defending decentralized liquidity providers against predatory MEV and JIT fee-sniping attacks.
 
 ## Problem

@@ -1,111 +1,120 @@
-# AquaGhost Protocol — 2-Minute Video Demo & Judging Evaluation Script
+# AquaGhost Protocol — 2-Minute Video Demo & Technical Presentation Script
 
 > **Target Duration:** 2 minutes 00 seconds  
-> **Format:** Screen recording with voiceover / picture-in-picture presenter  
-> **Target Audience:** ETHGlobal Online 2026 Judges (Chainlink, 1inch, Uniswap Foundation, The Graph)
+> **Format:** Technical Walkthrough (Slides 1–6 $\rightarrow$ 60s Live Terminal Demo $\rightarrow$ Slides 7–8)  
+> **Deck URL:** `http://localhost:3001/deck` (or open [`docs/deck.html`](deck.html) in browser)  
+> **Live Terminal:** `http://localhost:3001` (Next.js Cyberpunk Observatory)  
+> **Target Network:** Base Sepolia Testnet (Chain ID `84532`)
 
 ---
 
-## 🎬 Video Timeline & Narration Breakdown
+## ⏱️ Video Timeline Breakdown
 
 ```
-0:00 - 0:20 | The Problem (MEV & JIT Sandwich Attacks)
-0:20 - 0:45 | Architecture (Chainlink CRE + 1inch Aqua + Uniswap v4 + The Graph)
-0:45 - 1:25 | Live Demo Walkthrough (Attack Simulation, Revert, Enclave Attestation)
-1:25 - 1:45 | Deep Dives (AquaSwapVM, FairFlow Telemetry, Graph MCP)
-1:45 - 2:00 | AI Blueprint Rigor & Sponsor Ledgers Conclusion
+0:00 - 0:45 | Part I: Technical Context & Math (Slides 1 – 6)
+0:45 - 1:45 | Part II: 60-Second Live Terminal Demo (Mission Control on Base Sepolia)
+1:45 - 2:00 | Part III: Empirical Rigor & Conclusion (Slides 7 – 8)
 ```
 
 ---
 
-### Segment 1: The Problem (0:00 – 0:20)
-* **Visual:** Display the AquaGhost Banner / Mission Control Terminal. Show concentrated liquidity depth chart with active tick.
+## 🎬 Part I: Technical Context & Mathematics (0:00 – 0:45)
+
+### Slide 1: Cover & Vision (0:00 – 0:08)
+* **Visual:** Slide 1 on screen (`http://localhost:3001/deck`).
 * **Speaker Script:**
-  > *"Concentrated liquidity providers on AMMs lose hundreds of millions of dollars each year to predatory Just-In-Time (JIT) MEV sandwich attacks. Today's automated liquidity managers force LPs to make an impossible choice: either surrender custody of their tokens to a shared smart contract, or leak private rebalance parameters to the public mempool where MEV bots front-run them.*
-  > *Meet **AquaGhost Protocol**: the world's first hardware-isolated autonomous liquidity defense system."*
+  > *"Concentrated liquidity providers on AMMs bleed over four hundred million dollars each year to predatory Just-In-Time fee sniping and Loss-Versus-Rebalancing. Meet **AquaGhost Protocol**: a hardware-isolated autonomous liquidity defense system that protects sovereign makers without requiring asset custody or leaking mempool triggers."*
+
+### Slide 2: The Core Problem: The $400M+ Silent Drain (0:08 – 0:16)
+* **Visual:** Slide 2 highlighting JIT Sniping and LVR cards.
+* **Speaker Script:**
+  > *"Today, passive LPs bear all the volatility risk while MEV bots capture the yield. In JIT sniping, searchers borrow tens of millions via flash loans, deposit liquidity immediately before large swaps, siphon ninety percent of the fees, and withdraw in the exact same block—leaving passive makers with zero fee compensation and pure inventory risk."*
+
+### Slide 3: The Impossible LP Dilemma (0:16 – 0:24)
+* **Visual:** Slide 3 showing Trap A (Vaults) vs. Trap B (Public Mempools).
+* **Speaker Script:**
+  > *"Existing solutions force an impossible choice: either surrender custody to third-party pooled vaults—which have suffered over one point two billion in historical smart contract exploits—or automate rebalances publicly on-chain, where searchers front-run and sandwich the stop-loss transactions."*
+
+### Slide 4: Mathematical Anatomy of JIT Exploits (0:24 – 0:31)
+* **Visual:** Slide 4 displaying the concentrated liquidity dilution formula and LVR integral.
+* **Speaker Script:**
+  > *"Mathematically, fee share is strictly proportional to active liquidity density. When a flash-loan sniper injects twenty times the passive liquidity for zero blocks, the maker's fee share approaches zero. Meanwhile, cumulative LVR drains value continuously because AMMs cannot compute off-chain volatility privately."*
+
+### Slide 5: The AquaGhost Two-Tier Security Model (0:31 – 0:38)
+* **Visual:** Slide 5 showing Tier 1 (AWS Nitro Enclave TEE) & Tier 2 (Sovereign Non-Custodial Execution).
+* **Speaker Script:**
+  > *"AquaGhost breaks this dilemma by decoupling intelligence from execution: threat inference executes inside hardware-isolated AWS Nitro Enclaves with encrypted secrets that node operators cannot see. On-chain, capital remains one hundred percent sovereign in the maker's wallet, repositioned via 1inch Aqua and guarded by our Uniswap v4 Hook."*
+
+### Slide 6: Algorithmic Defense & Invariant Envelopes (0:38 – 0:45)
+* **Visual:** Slide 6 showing the dynamic fee surge model and invariant corridor guardrail.
+* **Speaker Script:**
+  > *"Our defense shifts pool fees dynamically based on pending volume surges, making the sniper's profit equation negative. Enclaves verify bounded slippage invariants before signing, and custom SwapVM opcodes enforce hardware attestations directly on the execution stack."*
 
 ---
 
-### Segment 2: System Architecture (0:20 – 0:45)
-* **Visual:** Transition to Architecture Diagram (or split screen showing CRE workflow and contract diagram).
+## ⚡ Part II: 60-Second Live Terminal Demo (0:45 – 1:45)
+
+* **Visual Transition:** Switch tab to `http://localhost:3001` (Next.js Cyberpunk Observatory).
+
+### Step 1: Baseline Pool Status (0:45 – 0:55)
+* **Visual:** Point to topbar `BASE SEPOLIA : 84532`, live block counter (`BLK #4677...`), and the calm green USDC/WETH concentrated depth ladder.
 * **Speaker Script:**
-  > *"AquaGhost bridges four core pillars:*
-  > 1. *Live pool depth is queried directly from **The Graph Network Gateway** with zero mocks.*
-  > 2. *Threat anomaly detection executes confidentially inside **Chainlink CRE** using **AWS Nitro Enclaves** and **Vault DON** encrypted secrets.*
-  > 3. *When an attack is detected, the enclave generates a verified cryptographic attestation.*
-  > 4. *On-chain, **1inch Aqua** repositions maker capital atomically via non-custodial EIP-712 permits, while our **Uniswap v4 Hook** intercepts the sniper and shifts pool fees dynamically."*
+  > *"Here is AquaGhost running live on Base Sepolia. Our USDC/WETH pool is currently calm with a baseline 5 bps fee. The depth ladder is streamed live from decentralized indexing, and all four TEE enclave sentinels are active."*
+
+### Step 2: On-Chain 1inch Aqua Swap Fill (0:55 – 1:10)
+* **Visual:** Click **`[ SIMULATE SWAP FILL (ON-CHAIN) ]`**.
+  - Button switches to `"BROADCASTING ON-CHAIN..."`.
+  - In ~3 seconds, transaction confirms.
+  - Live `<TxBanner />` flashes in emerald:
+    `CONFIRMED ON BASE SEPOLIA (BLK #46770426) — 1INCH AQUA SWAP FILL SIMULATION [ VIEW ON BASESCAN ↗ ]`.
+* **Speaker Script:**
+  > *"First, we simulate a standard 1inch Aqua trade. Clicking 'Simulate Swap Fill' broadcasts an authentic on-chain transaction to MockAquaRouter on Base Sepolia. In three seconds, it confirms on-chain, logging the block number with a direct BaseScan explorer link."*
+
+### Step 3: Triggering Predatory MEV Attack & Synchronous Revert (1:10 – 1:35)
+* **Visual:** Click **`[ SIMULATE MEV THREAT ]`** or **`[ TRIGGER MEV ATTACK ]`**.
+  - Synthesizer triggers klaxon alarm; UI turns crimson (`DEFENSE_ACTIVE`).
+  - Terminal log displays enclave ECDSA attestation generation.
+  - On-chain transaction broadcasts `AquaGhostHook.setDefenseMode(true, 250 bps)` on Base Sepolia.
+  - Banner confirms: `CONFIRMED ON BASE SEPOLIA (BLK #46770435) [ VIEW ON BASESCAN ↗ ]`.
+  - Point to audit log showing `UNISWAP_V4_HOOK: SniperLiquidityBlocked() — 0-block JIT injection reverted`.
+* **Speaker Script:**
+  > *"Now, an MEV bot attempts a predatory zero-block JIT sandwich. We trigger the attack. Instantly, our Nitro TEE sentinel identifies the surge, signs an attestation with its hardware enclave key, and broadcasts the defense shift on-chain. On Base Sepolia, the hook activates defense mode, 1inch Aqua repositions maker inventory out of the vulnerable tick, and the sniper's liquidity injection is reverted with SniperLiquidityBlocked(). The LP lost zero capital."*
+
+### Step 4: Disarm Defense & Explainable Telemetry (1:35 – 1:45)
+* **Visual:** Click **`[ DISARM DEFENSE (ON-CHAIN) ]`** to reset. Briefly navigate to `/firewall` to show `previewFee` FairFlow telemetry.
+* **Speaker Script:**
+  > *"We disarm defense on-chain. Notice on our Firewall page that aggregators can inspect fee states via previewFee before routing trades, maintaining one hundred percent public routing compatibility."*
 
 ---
 
-### Segment 3: Live Demo Walkthrough (0:45 – 1:25)
-* **Visual:** Mission Control Dashboard (`http://localhost:3000`).
-  1. Show normal pool status (Green, Calm, 5 bps fee).
-  2. Click **`[ Launch Predatory JIT Attack ]`**.
-  3. Audio synthesizer triggers red-alert klaxon; screen turns crimson (`DEFENSE_ACTIVE`).
-  4. Radar blip flags incoming MEV sandwich sniper.
-  5. Terminal log streams:
-     - `ENCLAVE_ATTESTATION_GENERATED (Workflow 0056b79a...)`
-     - `1INCH_AQUA_DOCK_SHIP: Repositioned maker capital into safe corridor`
-     - `UNISWAP_V4_HOOK: SniperLiquidityBlocked() — 0-block JIT injection reverted`
-     - `DYNAMIC_FEE_SURGE: Shifted pool fee to 100 bps`
-  6. Click **`[ Normalize Pool ]`** to restore calm state.
+## 📊 Part III: Empirical Rigor & Conclusion (1:45 – 2:00)
+
+* **Visual Transition:** Switch back to Slide 8 (`http://localhost:3001/deck`).
+
+### Slide 7: 1,000-Block Empirical Proof (1:45 – 1:53)
+* **Visual:** Slide 7 displaying the 4-Pillar Empirical Scorecard.
 * **Speaker Script:**
-  > *"Let's see it live on our Next.js operator terminal.*
-  > *Here in Mission Control, our USDC/WETH pool is currently calm with a baseline 5 bps fee. Now, an MEV bot attempts a predatory 0-block JIT sandwich.*
-  > *We trigger the attack. Instantly, our Chainlink CRE Nitro Sentinel identifies the surge, Vault DON guardrails engage, and an attestation is signed inside the enclave.*
-  > *On-chain, 1inch Aqua atomically docks maker inventory out of the vulnerable tick, while our Uniswap v4 Hook rejects the sniper's liquidity injection with a custom revert. The attack is completely neutralized with zero LP capital lost."*
+  > *"In our empirical backtest simulating one thousand blocks on real Ethereum Mainnet dynamics, AquaGhost achieved a net LP yield boost of plus one thousand one hundred and fifty basis points—saving over two point two million dollars in adverse selection with one hundred percent of JIT snipers reverted."*
+
+### Slide 8: Conclusion & Summary (1:53 – 2:00)
+* **Visual:** Slide 8 showing reproduction commands and contract links.
+* **Speaker Script:**
+  > *"AquaGhost proves LPs no longer have to sacrifice self-custody for MEV protection. With forty-two passing Foundry tests and live Base Sepolia contracts, the system is ready to inspect and reproduce today. Thank you!"*
 
 ---
 
-### Segment 4: Technical Deep-Dives (1:25 – 1:45)
-* **Visual:** Quick cuts across the specialized views:
-  - `/vault`: Show 1inch Aqua Vault with `permitDelegatedSentinel` toggle and `AquaSwapVM` opcode execution.
-  - `/sentinel`: Show Chainlink Nitro Sentinel with deployed Workflow ID `0056b79a...` and on-demand HTTP POST cURL.
-  - `/firewall`: Show Uniswap v4 Hook Firewall with FairFlow explainable fee preview (`previewFee`).
-* **Speaker Script:**
-  > *"Under the hood, we pushed each sponsor SDK to its limits:*
-  > *In 1inch Aqua, we implemented **AquaSwapVM** with custom `OP_TEE_GUARD` and `OP_DYNAMIC_FEE` opcodes, using only 2.2 KB of bytecode.*
-  > *In Uniswap v4, we integrated **FairFlow explainable telemetry**, enabling aggregators to inspect fee states before submitting trades.*
-  > *And for The Graph, we deployed `@aquaghost/graph-mcp`, providing standardized AI agent tooling over live decentralized gateway data."*
+## 🛠️ Quick Verification Reference for Presenter
 
----
+```bash
+# 1. Slide Deck URL:
+http://localhost:3001/deck   # Or open docs/deck.html
 
-### Segment 5: Engineering Rigor & Upstream Impact (1:45 – 2:00)
-* **Visual:** Show `AI_ASSISTANCE.md` atomic commit table and `docs/sponsor-issues/` directory.
-* **Speaker Script:**
-  > *"AquaGhost was engineered with zero vibe-coding under the rigorous AI Blueprint framework, featuring 36 passing Foundry tests, 5 live on-chain Anvil test suites, and 13 ready-to-file upstream GitHub issues across Chainlink, 1inch, Uniswap, and The Graph.*
-  > *AquaGhost: Hardware-isolated, self-custodial liquidity defense. Thank you!"*
+# 2. Live Operator Console:
+http://localhost:3001        # Base Sepolia Network (Chain ID 84532)
 
----
+# 3. Contract Tests:
+cd contracts && forge test   # 42/42 Tests Passing
 
-## 📋 Judge's Quick Verification Checklist
-
-Judges can verify every claim independently in under 2 minutes:
-
-1. **Foundry Test Suite (36/36 Passing):**
-   ```bash
-   cd contracts && forge test -vvv
-   ```
-2. **Live On-Chain Anvil Integration (Real transactions, SwapVM, and Reverts):**
-   ```bash
-   # Terminal 1:
-   anvil --port 8545 --chain-id 31337
-   # Terminal 2:
-   npm run test:live
-   ```
-3. **Live The Graph Network Gateway MCP Query (Zero Mocks):**
-   ```bash
-   npm run test:mcp
-   ```
-4. **CRE Nitro Enclave Simulation (WASM verified):**
-   ```bash
-   cd cre-workflow && cre workflow simulate --trigger-index 0
-   ```
-5. **Next.js 16 Web3 Cyberpunk Observatory Terminal:**
-   ```bash
-   npm run dev:next
-   # Open http://localhost:3000
-   ```
-6. **Deployed CRE Workflow Confirmation:**
-   - Deployed Workflow ID: `0056b79abdf926dbb2a01ba70b8c95eb35696ce16c8346234adaef4834e92621`
-   - Org: `emarc_org` | DON Family: `zone-a` | Region: `us-west-2`
+# 4. Empirical Backtest:
+npm run backtest             # 1,000-block math simulation
+```

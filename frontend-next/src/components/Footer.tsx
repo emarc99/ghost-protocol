@@ -1,9 +1,15 @@
 "use client";
 
 import React from "react";
+import { usePathname } from "next/navigation";
 import { ShieldCheck, Cpu, HardDrive, Globe } from "lucide-react";
 
 export function Footer() {
+  const pathname = usePathname();
+  if (pathname === "/deck") {
+    return null;
+  }
+
   return (
     <footer className="footer-bar">
       <div style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>

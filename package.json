@@ -8,9 +8,15 @@
     "dev:next": "npm --prefix frontend-next run dev",
     "build:next": "npm --prefix frontend-next run build",
     "simulate": "node --experimental-strip-types scripts/simulate_jit_attack.ts",
+    "backtest": "node --experimental-strip-types scripts/backtest_empirical_defense.ts",
     "test:live": "node --experimental-strip-types scripts/test_live_anvil_integration.ts",
     "mcp:graph": "node --env-file=.env --experimental-strip-types graph-mcp/src/server.ts",
-    "test:mcp": "node --env-file=.env --experimental-strip-types graph-mcp/src/test_client.ts"
+    "test:mcp": "node --env-file=.env --experimental-strip-types graph-mcp/src/test_client.ts",
+    "cre:sentinel:sim": "cre workflow simulate cre-workflow -T staging-settings -e cre-workflow/.env --trigger-index 0 --non-interactive",
+    "cre:sentinel:deploy": "cre workflow deploy cre-workflow -T staging-settings",
+    "challenge:ui": "npm --prefix challenges/liquidation-protection/frontend run dev",
+    "challenge:sim": "cre workflow simulate challenges/liquidation-protection/workflow -T staging-settings -e challenges/liquidation-protection/workflow/.env --trigger-index 0 --non-interactive",
+    "test:challenge": "cd contracts && forge test --match-contract ChallengeLendingTest"
   },
   "dependencies": {
     "ethers": "^6.13.0"

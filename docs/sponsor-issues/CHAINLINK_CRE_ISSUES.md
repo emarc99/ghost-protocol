@@ -118,15 +118,99 @@ In the official Chainlink CRE Confidential Bootcamp (Case Study 2: *Automated Li
 
 ---
 
-## Issue 6: [Feature Request] Offline Mode & Local Secret Injection Flag for CI/CD
+## Issue 6: [EVM / Keystone Forwarder DX] Silent `WriteReport` SUCCESS when Receiver Contract Lacks ERC-165 (`supportsInterface`)
 
 ### Context
-During hackathons and automated CI workflows, developers need to simulate confidential workflows locally (`cre workflow simulate`) without requiring an active interactive browser session (`--secrets-auth=browser`) or prior manual organization provisioning on `cre.chain.link`.
+When a CRE Workflow with confidential in-TEE handlers writes on-chain reports via `evmClient.writeReport(donRuntime, { receiver, report, gasConfig })` targeting the official production Keystone Forwarder (`0xF8344CFd5c43616a4366C34E3EEE75af79a74482` on Base Sepolia / Ethereum Sepolia).
 
-### Problem
-When automating tests in GitHub Actions or headless Docker containers, the requirement for browser auth or interactive login creates friction for automated regression suites.
+### Problem & DX Friction
+1. **Simulation vs Production Divergence:**
+   - In `cre workflow simulate --broadcast`, the CLI broadcasts through `MockKeystoneForwarder` (`0x15fC6ae9…9F88` on Sepolia or `0x82300bd7...` on Base Sepolia). This simulation forwarder accepts reports directly without strictly asserting ERC-165 compliance.
+   - In deployed production on the DON, however, the real Keystone Forwarder performs an internal `staticcall` to `supportsInterface(type(IReceiver).interfaceId)` before delivering the report payload to `onReport(bytes,bytes)`.
+2. **Silent Failure & Deceptive Success Status:**
+   - If the developer's receiver contract does not inherit `ERC165` or implements only `onReport(...)` without returning `true` for `type(IReceiver).interfaceId` (`0x805f2132`), the Forwarder's `supportsInterface` staticcall reverts.
+   - The Forwarder swallows the revert, records `ReportProcessed(receiver, ..., result: false)`, and finishes the transaction.
+   - From the CRE workflow's perspective, `WriteReport` reports `SUCCESS` with duration 0ms and an empty txHash, leaving zero error message in `cre workflow execution events`.
+   - Developers spend hours believing the DON or write target is broken when the issue is simply a missing ERC-165 interface implementation.
 
-### Suggested Improvement
-Add an explicit `--secrets-auth=env` or `--offline` flag to `cre workflow simulate` that strictly parses local `.env` and `secrets.yaml` without attempting any network handshake or token renewal with the CRE registry, enabling seamless CI/CD test automation.
+### Code Snippet & Canonical Fix
+Receiver contracts must explicitly inherit OpenZeppelin's `ERC165` and register `IReceiver`:
+
+```solidity
+import { IReceiver } from "./interfaces/IReceiver.sol";
+import { ERC165 } from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+
+contract AquaGhostHook is BaseHook, ERC165, IReceiver {
+    address public keystoneForwarder;
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+        return interfaceId == type(IReceiver).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    function onReport(bytes calldata metadata, bytes calldata report) external override {
+        if (keystoneForwarder != address(0) && msg.sender != keystoneForwarder) {
+            revert UnauthorizedForwarder(msg.sender);
+        }
+        // Decode verified attestation and execute defense
+        (string memory action, , , uint24 feeBps, uint256 nonce, bytes memory signature) = 
+            abi.decode(report, (string, int24, int24, uint24, uint256, bytes));
+        _applyDefense(active, feeBps, nonce, signature);
+    }
+}
+```
+
+### Suggested Solution for Chainlink Labs
+1. **Align Simulation with Production:** Update `MockKeystoneForwarder` used in `cre workflow simulate` to enforce the exact same `supportsInterface` staticcall check as the production Forwarder, catching missing ERC-165 implementations immediately at development time.
+2. **Surfaced Diagnostics in CRE CLI:** In `cre workflow execution events --verbose`, if the forwarder emits `result: false` or if `txHash` is empty, surface an explicit warning: `⚠️ Forwarder staticcall supportsInterface failed on receiver <address>. Ensure receiver implements IERC165 and IReceiver.`
+3. **Documentation:** Add a prominent callout box in *Writing Data Onchain* and the *Forwarder Directory* highlighting that target contracts MUST inherit `ERC165` and support `IReceiver`.
+
+---
+
+## Issue 7: [CLI / Monorepo DX] Project Root Discovery Silently Defaults to Git Root in Monorepos
+
+### Context
+In multi-workflow repositories or monorepos (e.g., a project containing a main protocol workflow in `cre-workflow/` and a secondary challenge workflow in `challenges/liquidation-protection/workflow/`).
+
+### Problem & DX Friction
+1. When a developer navigates into a nested workflow directory and runs:
+   ```bash
+   cre secrets create secrets.yaml --target staging-settings --secrets-auth=browser
+   ```
+2. The CRE CLI automatically searches upwards for `.git` and silently designates the repository root as `--project-root`.
+3. Consequently, the CLI attempts to read the *root* `secrets.yaml` and root `.env`, failing with obscure errors like:
+   ```
+   ✗ environment variable "STAGING_ENCLAVE_SIGNER_KEY" for secret "ENCLAVE_SIGNER_KEY" not found; please export it
+   ```
+   even though the local `secrets.yaml` and `.env` in the current working directory are fully populated!
+4. The developer must deduce through trial-and-error that `-R . -e .env` must be explicitly passed.
+
+### Suggested Solution
+1. When `workflow.yaml` exists in the current working directory, default `--project-root` to `.` rather than traversing to `.git`.
+2. Or detect if multiple `secrets.yaml` exist in the path hierarchy and warn the user:
+   ```
+   ⚠️ Detected local secrets.yaml in ./secrets.yaml. Using local directory as project root (use -R to override).
+   ```
+
+---
+
+## Issue 8: [CLI / DX] Auto-Detect `--secrets-auth=browser` for Private Deployment Registries
+
+### Context
+When storing secrets in the Vault DON for a confidential workflow targeting a private registry (`deployment-registry: "private"` in `workflow.yaml`).
+
+### Problem & DX Friction
+1. `cre secrets create` defaults to `--secrets-auth=onchain` (which expects an on-chain smart contract transaction using wallet gas).
+2. For private workflows, however, `--secrets-auth=browser` is required to authenticate against the Vault DON gateway via OAuth session.
+3. If `--secrets-auth` is omitted, the CLI fails attempting on-chain execution, confusing developers who are building purely private TEE workflows.
+
+### Suggested Solution
+Since `workflow.yaml` already explicitly declares:
+```yaml
+user-workflow:
+  deployment-registry: "private"
+```
+The CRE CLI should automatically inspect the selected `--target` in `workflow.yaml`. If `deployment-registry` is `"private"`, it should automatically default `--secrets-auth` to `"browser"`.
+
+---
 
 
